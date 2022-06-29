@@ -9,7 +9,7 @@ import (
 	"gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
 )
 
-func main() {
+func start() {
 	defer midi.CloseDriver()
 
 	drivvv, _ := rtmididrv.New()
