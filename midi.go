@@ -9,6 +9,10 @@ import (
 	"gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
 )
 
+func getInputPorts() string {
+	return midi.GetInPorts().String()
+}
+
 func start() {
 	defer midi.CloseDriver()
 
