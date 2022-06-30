@@ -1,8 +1,8 @@
 # README
 
-https://pkg.go.dev/gitlab.com/gomidi/midi/v2
-https://gitlab.com/gomidi/midi/
-https://wails.io/
+https://pkg.go.dev/gitlab.com/gomidi/midi/v2  
+https://gitlab.com/gomidi/midi/  
+https://wails.io/  
 
 ## About
 
