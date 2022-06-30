@@ -26,6 +26,10 @@ func main() {
 	FileMenu.AddText("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
 		os.Exit(0)
 	})
+	AboutMenu := AppMenu.AddSubmenu("About")
+	AboutMenu.AddText("About", keys.CmdOrCtrl("a"), func(_ *menu.CallbackData) {
+
+	})
 
 	if runtime.GOOS == "darwin" {
 		AppMenu.Append(menu.EditMenu()) // on macos platform, we should append EditMenu to enable Cmd+C,Cmd+V,Cmd+Z... shortcut
@@ -39,6 +43,7 @@ func main() {
 		Assets:           assets,
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.startup,
+		OnShutdown:       app.shutdown,
 		Menu:             AppMenu,
 		Bind: []interface{}{
 			app,

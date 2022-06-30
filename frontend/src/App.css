@@ -22,19 +22,48 @@
 }
 
 .input-box .btn {
-    width: 60px;
+    width: 120px;
     height: 30px;
-    line-height: 30px;
-    border-radius: 3px;
+    line-height: 0px;
+    border-radius: 6px;
     border: none;
     margin: 0 0 0 20px;
-    padding: 0 8px;
+    margin-top: 10px;
+    padding: 0 8 px;
     cursor: pointer;
+    background-image: linear-gradient(to top, #2885be 0%, #4fa1b6 100%);
+    color: #000000;
+}
+
+.input-box .btn-disabled {
+    width: 120px;
+    height: 30px;
+    line-height: 0px;
+    border-radius: 6px;
+    border: none;
+    margin: 0 0 0 20px;
+    margin-top: 10px;
+    padding: 0 8 px;
+    cursor: pointer;
+    background-image: linear-gradient(to top, #2885be 0%, #4fa1b6 100%);
+    color: #000000;
+
+    opacity: 50%;
+    pointer-events: none;
 }
 
 .input-box .btn:hover {
     background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
     color: #333333;
+}
+
+.input-box .select {
+    cursor: pointer;
+}
+
+.input-box .select-disabled {
+    opacity: 50%;
+    pointer-events: none;
 }
 
 .input-box .input {

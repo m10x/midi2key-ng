@@ -22,12 +22,27 @@ func (a *App) startup(ctx context.Context) {
 	fmt.Println("app started")
 }
 
-// Greet returns a greeting for the given name
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
+func (a *App) shutdown(ctx context.Context) {
+	closeDriver()
+	fmt.Println("app shutdowned")
 }
 
-// Greet returns a greeting for the given name
+func (a *App) Initialize() string {
+	fmt.Println("initialize")
+	return initialize()
+}
+
 func (a *App) LoadDevices() string {
+	fmt.Println("load devices")
 	return getInputPorts()
+}
+
+func (a *App) Listen(listen bool, device string) string {
+	if listen {
+		fmt.Println("start listening " + device)
+		return startListen(device)
+	} else {
+		fmt.Println("stop listening " + device)
+		return stopListen()
+	}
 }

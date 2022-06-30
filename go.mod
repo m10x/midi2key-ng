@@ -1,4 +1,4 @@
-module github.com/m10x/midi2key-go-gui/v0
+module github.com/m10x/midi2key-ng/v0
 
 go 1.17
 
