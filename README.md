@@ -1,19 +1,16 @@
-# README
-
-https://pkg.go.dev/gitlab.com/gomidi/midi/v2  
-https://gitlab.com/gomidi/midi/  
-https://wails.io/  
+# midi2key-ng
 
 ## About
 
-This is the official Wails React template.
+Map Midikeys to Hotkeys. With GUI. Crossplattform. 
 
-## Live Development
+![image](https://user-images.githubusercontent.com/4344935/176676214-7e811e2e-664b-4d81-8a28-ff409b919118.png)
 
-To run in live development mode, run `wails dev` in the project directory. In another terminal, go into the `frontend`
-directory and run `npm run dev`. The frontend dev server will run on http://localhost:34115. Connect to this in your
-browser and connect to your application.
+## Credits
 
-## Building
+### Frontend Framework:  
+https://wails.io/  
 
-To build a redistributable, production mode package, use `wails build`.
+### MIDI Library:
+https://gitlab.com/gomidi/midi/  
+https://pkg.go.dev/gitlab.com/gomidi/midi/v2  
