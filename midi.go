@@ -16,7 +16,6 @@ var keyMap map[uint8]int
 
 func initialize() string {
 	rtmididrv.New() // Not needed, but rtmididrv needs to be called, so the import doesn't get removed
-	keyMap = make(map[uint8]int)
 	return ""
 }
 
@@ -52,13 +51,20 @@ func startListen(device string) string {
 		return "ERROR midi.SendTo: " + err.Error()
 	}
 
-	// reset all lights
-	for i := 0; i < 240; i++ {
+	// turn all lights off
+	keyMap = make(map[uint8]int)
+	for i := 0; i < 255; i++ {
 		msg := midi.NoteOn(0, uint8(i), 0)
 		err := send(msg)
 		if err != nil {
 			fmt.Printf("ERROR send: %s\n", err)
 		}
+	}
+
+	msg := midi.NoteOn(0, uint8(37), 255)
+	err = send(msg)
+	if err != nil {
+		fmt.Printf("ERROR send: %s\n", err)
 	}
 
 	errMidiInAlsa := "MidiInAlsa: message queue limit reached!!"
@@ -76,7 +82,7 @@ func startListen(device string) string {
 			fmt.Printf("starting note %s (int: %v) on channel %v with velocity %v\n", midi.Note(key), key, ch, vel)
 			state, ok := keyMap[key]
 			if !ok || state == 0 {
-				vel = 127
+				vel = 255
 				keyMap[key] = 1
 			} else {
 				vel = 0
@@ -121,9 +127,6 @@ func startListen(device string) string {
 }
 
 func stopListen() string {
-	for key := range keyMap {
-		keyMap[key] = 0
-	}
 	if out != nil {
 		out.Close()
 	} else {
