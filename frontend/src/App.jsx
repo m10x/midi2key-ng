@@ -3,7 +3,6 @@ import './App.css';
 import {Initialize} from "../wailsjs/go/main/App";
 import {LoadDevices} from "../wailsjs/go/main/App";
 import {Listen} from "../wailsjs/go/main/App";
-import Select from 'react-select';
 
 function App() { 
 
@@ -26,10 +25,11 @@ function App() {
         { label: noDeviceFound, value: noDeviceFound },
     ]);
 
-    const aquaticCreatures = [
+    const keyOptions = [
+        { label: 'Choose Option', value: 'Choose Option' },
         { label: 'Keypress', value: 'Keypress' },
         { label: 'Mute Sound', value: 'Mute Sound' },
-      ];
+    ];
 
     function initialize() {
         Initialize();
@@ -70,11 +70,13 @@ function App() {
             setListenText(stopListen);
             document.getElementById("selDevice").className = "select-disabled";
             document.getElementById("btnRefresh").className = "btn-disabled";
+            document.getElementById("divKeyOptions").className = "";
         } else {
             Listen(false, chosenDevice)
             setListenText(startListen);
             document.getElementById("selDevice").className = "select";
             document.getElementById("btnRefresh").className = "btn";
+            document.getElementById("divKeyOptions").className = "invisible";
         }
     }
 
@@ -97,16 +99,35 @@ function App() {
                 <button id="btnRefresh" className="btn" onClick={loadDevices}>Refresh Devices</button>
                 <button id="btnChangeListen" className="btn-disabled" onClick={listen}>{listenText}</button>
             </div>
-            <div id="buttons" className="invisible">
-                <button id="btn1" className="btn" onClick={loadDevices}>Button1</button>
-                <Select
-                    options={aquaticCreatures}
-                />
+            <div id="divKeyOptions" className="invisible">
                 <br></br>
-                <button id="btn1" className="btn" onClick={loadDevices}>Button2</button>
-                <button id="btn1" className="btn" onClick={loadDevices}>Button3</button>
-                <button id="btn1" className="btn" onClick={loadDevices}>Button4</button>
-                <button id="btn1" className="btn" onClick={loadDevices}>Button5</button>
+                <button id="btn1" className="btn" onClick={loadDevices}>Assign Midi</button>
+                <select id="sel1" onChange={updateChosenDevice} className="select">
+                        {
+                            keyOptions.map((option) => (
+                                <option value={option.value}>{option.label}</option>
+                            ))
+                        }
+                    </select>
+                <br></br>
+                <button id="btn2" className="btn" onClick={loadDevices}>Assign Midi</button>
+                <select id="sel2" onChange={updateChosenDevice} className="select">
+                        {
+                            keyOptions.map((option) => (
+                                <option value={option.value}>{option.label}</option>
+                            ))
+                        }
+                    </select>
+                <br></br>
+                <button id="btn2" className="btn" onClick={loadDevices}>Assign Midi</button>
+                <select id="sel2" onChange={updateChosenDevice} className="select">
+                        {
+                            keyOptions.map((option) => (
+                                <option value={option.value}>{option.label}</option>
+                            ))
+                        }
+                    </select>
+                <br></br>
             </div>
         </div>
     )
