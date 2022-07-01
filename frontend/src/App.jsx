@@ -1,5 +1,4 @@
 import {useState} from 'react';
-import logo from './assets/images/logo-universal.png';
 import './App.css';
 import {Initialize} from "../wailsjs/go/main/App";
 import {LoadDevices} from "../wailsjs/go/main/App";
@@ -76,7 +75,7 @@ function App() {
 
     return (
         <div id="App" onLoad={initialize}>
-            <img src={logo} id="logo" alt="logo"/>
+            <label className="title">midi2key-ng</label>
             <div className="result">{lblStatus}</div>
             <div id="dropdown" className="input-box">
                 <label>{lblDevice}
