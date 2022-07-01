@@ -20,3 +20,7 @@ https://wails.io/
 **gomidi**  
 https://gitlab.com/gomidi/midi/ 
 https://pkg.go.dev/gitlab.com/gomidi/midi/v2  
+
+### Cross Plattform Volume Control
+**volume-go**  
+https://github.com/itchyny/volume-go
