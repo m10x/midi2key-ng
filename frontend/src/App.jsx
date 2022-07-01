@@ -3,7 +3,7 @@ import './App.css';
 import {Initialize} from "../wailsjs/go/main/App";
 import {LoadDevices} from "../wailsjs/go/main/App";
 import {Listen} from "../wailsjs/go/main/App";
-
+import Select from 'react-select';
 
 function App() { 
 
@@ -25,6 +25,11 @@ function App() {
     const [options, setOptions] = useState([
         { label: noDeviceFound, value: noDeviceFound },
     ]);
+
+    const aquaticCreatures = [
+        { label: 'Keypress', value: 'Keypress' },
+        { label: 'Mute Sound', value: 'Mute Sound' },
+      ];
 
     function initialize() {
         Initialize();
@@ -91,6 +96,17 @@ function App() {
             <div id="start" className="input-box">
                 <button id="btnRefresh" className="btn" onClick={loadDevices}>Refresh Devices</button>
                 <button id="btnChangeListen" className="btn-disabled" onClick={listen}>{listenText}</button>
+            </div>
+            <div id="buttons" className="invisible">
+                <button id="btn1" className="btn" onClick={loadDevices}>Button1</button>
+                <Select
+                    options={aquaticCreatures}
+                />
+                <br></br>
+                <button id="btn1" className="btn" onClick={loadDevices}>Button2</button>
+                <button id="btn1" className="btn" onClick={loadDevices}>Button3</button>
+                <button id="btn1" className="btn" onClick={loadDevices}>Button4</button>
+                <button id="btn1" className="btn" onClick={loadDevices}>Button5</button>
             </div>
         </div>
     )
