@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"gitlab.com/gomidi/midi/v2"
@@ -24,8 +25,18 @@ func closeDriver() {
 	midi.CloseDriver()
 }
 
-func getInputPorts() string {
-	return midi.GetInPorts().String()
+func getInputPorts() []string {
+	var ports []string
+
+	portArr := strings.Split(midi.GetInPorts().String(), "]")
+	for i := len(portArr) - 1; i > 0; i-- {
+		port := strings.Split(portArr[i], ":")[0]
+		ports = append(ports, strings.TrimSpace(port))
+	}
+
+	fmt.Println(ports)
+
+	return ports
 }
 
 func startListen(device string) string {
