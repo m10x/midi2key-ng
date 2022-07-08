@@ -21,6 +21,10 @@ https://wails.io/
 https://gitlab.com/gomidi/midi/ 
 https://pkg.go.dev/gitlab.com/gomidi/midi/v2  
 
+### Simulate Keyboard + Mouse
+**robot-go**
+https://github.com/go-vgo/robotgo
+
 ### Cross Plattform Volume Control
 **volume-go**  
 https://github.com/itchyny/volume-go
