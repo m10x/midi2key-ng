@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -9,11 +10,8 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var data = [][]string{[]string{"note", "hotkey", "description", "new2"},
-	[]string{"A1", "top right", "new", "new2"},
-	[]string{"B2", "bottom right", "newx", "newx2"},
-	[]string{"C3", "bottom right", "newx", "newx2"},
-	[]string{"D4", "bottom right", "newx", "newx2"}}
+var header = []string{"note", "hotkey", "description", "new2"}
+var data = [][]string{header}
 
 var strNoDevice = "No Device Found"
 var strStartListen = "Start Listen"
@@ -21,6 +19,7 @@ var strStopListen = "Stop Listen"
 var midiDevice = strNoDevice
 var combo *widget.Select
 var btnListen *widget.Button
+var selectedCell widget.TableCellID
 
 func refreshDevices() {
 	devices := getInputPorts()
@@ -56,11 +55,14 @@ func main() {
 		if btnListen.Text == strStartListen {
 			startListen(midiDevice)
 			btnListen.Text = strStopListen
+			btnListen.Refresh()
 			btnRefresh.Disable()
 			combo.Disable()
+
 		} else {
 			stopListen()
 			btnListen.Text = strStartListen
+			btnListen.Refresh()
 			btnRefresh.Enable()
 			combo.Enable()
 		}
@@ -79,8 +81,32 @@ func main() {
 			o.(*widget.Label).SetText(data[i.Row][i.Col])
 		})
 
-	w.SetContent(container.NewVBox(
-		hBoxSelect,
+	table.OnSelected = func(id widget.TableCellID) {
+		selectedCell = id
+		fmt.Println("Selected Cell Col", selectedCell.Col, "Row", selectedCell.Row)
+	}
+
+	btnAddRow := widget.NewButton("Add Row", func() {
+		dataLen := strconv.Itoa(len(data))
+		data = append(data, []string{dataLen, dataLen, dataLen, dataLen})
+		table.Refresh()
+	})
+	btnEditRow := widget.NewButton("Edit Row", nil)
+	btnDeleteRow := widget.NewButton("Delete Row", func() {
+		tmpData := [][]string{header}
+		for i, x := range data {
+			if i != selectedCell.Row && i != 0 { // Dont apped header again, dont append row to delete
+				tmpData = append(tmpData, x)
+			}
+		}
+		data = tmpData
+		table.Refresh()
+	})
+
+	hBoxTable := container.NewHBox(btnAddRow, btnEditRow, btnDeleteRow)
+
+	w.SetContent(container.NewBorder(
+		hBoxSelect, hBoxTable, nil, nil,
 		table,
 	))
 
