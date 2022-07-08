@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -91,7 +92,21 @@ func main() {
 		data = append(data, []string{dataLen, dataLen, dataLen, dataLen})
 		table.Refresh()
 	})
-	btnEditRow := widget.NewButton("Edit Row", nil)
+	btnEditRow := widget.NewButton("Edit Row", func() {
+		popupEdit := a.NewWindow("Edit Row")
+		popupEdit.Resize(fyne.NewSize(400, 300))
+
+		lblNote := widget.NewLabel("Note:")
+		btnNote := widget.NewButton("Press this Button", nil)
+		lblDescription := widget.NewLabel("Description:")
+		entryDescription := widget.NewEntry()
+
+		btnSave := widget.NewButton("Save", nil)
+		btnCancel := widget.NewButton("Cancel", nil)
+
+		popupEdit.SetContent(container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblDescription, entryDescription), container.NewCenter(container.NewHBox(btnSave, btnCancel))))
+		popupEdit.Show()
+	})
 	btnDeleteRow := widget.NewButton("Delete Row", func() {
 		tmpData := [][]string{header}
 		for i, x := range data {
