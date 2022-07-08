@@ -1,14 +1,12 @@
 # midi2key-ng
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/m10x/midi2key-ng)](https://golang.org/)
-[![Wails.io](https://img.shields.io/badge/Fyne%20v2)](https://fyne.io/)
-[![Gomidi](https://img.shields.io/badge/Gomidi-v2-blue)]([https://wails.io/](https://gitlab.com/gomidi/midi/))
+[![Fyne.io](https://img.shields.io/badge/Fyne-v2-blue)](https://fyne.io/)
+[![Gomidi](https://img.shields.io/badge/Gomidi-v2-blue)](https://gitlab.com/gomidi/midi/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## About
 
 Map Midikeys to Hotkeys. With GUI. Crossplattform. 
-
-![image](https://user-images.githubusercontent.com/4344935/176676214-7e811e2e-664b-4d81-8a28-ff409b919118.png)
 
 ## Credits
 
