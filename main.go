@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -14,10 +15,13 @@ import (
 
 var header = []string{"key", "hotkey", "description", "velocity"}
 var data = [][]string{header}
+var versionPref = 1
 
 var strNoDevice = "No Device Found"
 var strStartListen = "Start Listen"
 var strStopListen = "Stop Listen"
+var preferencesLimitatorFirst = "€m10x.de€"
+var preferencesLimitatorSecond = "$m10x.de$"
 var comboSelect *widget.Select
 var comboHotkey *widget.Select
 var btnListen *widget.Button
@@ -32,6 +36,7 @@ var menuItemListen *fyne.MenuItem
 var btnRefresh *widget.Button
 var menuTray *fyne.Menu
 var desk desktop.App
+var a fyne.App
 
 func refreshDevices() {
 	devices := getInputPorts()
@@ -103,8 +108,67 @@ func listen() {
 	}
 }
 
+func dataToString() string {
+	strArr := ""
+	for i, d := range data {
+		if i == 0 { // skip first row which is the header row
+			continue
+		}
+		for ii, dd := range d {
+			if ii > 0 {
+				strArr += preferencesLimitatorFirst
+			}
+			strArr += dd
+		}
+		strArr += preferencesLimitatorSecond
+	}
+	fmt.Println("dataToString: " + strArr)
+	return strArr
+}
+
+func stringToData(str string) {
+	for _, d := range strings.Split(str, preferencesLimitatorSecond) {
+		dataRow := strings.Split(d, preferencesLimitatorFirst)
+		if len(dataRow) == len(data[0]) { // empty or too short dataRow will cause fyne to crash
+			fmt.Printf("DataRow: %v\n", dataRow)
+			data = append(data, dataRow)
+		}
+	}
+}
+
+func setPreferences() {
+	fmt.Println("Set Preferences")
+	a.Preferences().SetInt("version", versionPref)
+	a.Preferences().SetString("device", comboSelect.Selected)
+	a.Preferences().SetString("data", dataToString())
+}
+
+func getPreferences() {
+	fmt.Println("Get Preferences")
+	prefVersion := a.Preferences().IntWithFallback("version", 0)
+	if prefVersion == 0 {
+		fmt.Println("No Preferences found")
+		return
+	} else if prefVersion != versionPref {
+		fmt.Println("Incompatible Preferences version")
+		return
+	}
+	fmt.Println("Found Preferences")
+
+	deviceOptions := comboSelect.Options
+	prefDevice := a.Preferences().StringWithFallback("device", "")
+	for i := 0; i < len(deviceOptions); i++ {
+		if deviceOptions[i] == prefDevice {
+			comboSelect.SetSelectedIndex(i)
+			fmt.Println("Preffered Device " + prefDevice)
+		}
+	}
+	prefData := a.Preferences().StringWithFallback("data", "")
+	stringToData(prefData)
+}
+
 func main() {
-	a := app.NewWithID("de.m10x.midi2key-ng")
+	a = app.NewWithID("de.m10x.midi2key-ng")
 	w := a.NewWindow("midi2key-ng")
 	w.Resize(fyne.NewSize(600, 400))
 
@@ -149,8 +213,9 @@ func main() {
 	table.SetColumnWidth(3, 70)
 
 	btnAddRow = widget.NewButton("Add Row", func() {
-		data = append(data, []string{"", "", "", "255"})
+		data = append(data, []string{"-", "-", "-", "255"})
 		table.Refresh()
+		setPreferences()
 	})
 	btnDeleteRow = widget.NewButton("Delete Row", func() {
 		tmpData := [][]string{header}
@@ -161,6 +226,7 @@ func main() {
 		}
 		data = tmpData
 		table.Refresh()
+		setPreferences()
 	})
 	btnEditRow = widget.NewButton("Edit Row", func() {
 		if selectedCell.Row == 0 {
@@ -216,6 +282,7 @@ func main() {
 			data[rowToEdit][3] = entryVelocity.Text
 			table.Refresh()
 			popupEdit.Hide()
+			setPreferences()
 		})
 		btnCancel := widget.NewButton("Cancel", func() {
 			popupEdit.Hide()
@@ -250,6 +317,8 @@ func main() {
 		desk.SetSystemTrayMenu(menuTray)
 		desk.SetSystemTrayIcon(resourceMidiOffPng)
 	}
+
+	getPreferences()
 
 	w.ShowAndRun()
 }
