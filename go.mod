@@ -3,7 +3,7 @@ module github.com/m10x/midi2key-ng
 go 1.18
 
 require (
-	fyne.io/fyne/v2 v2.2.2
+	fyne.io/fyne/v2 v2.2.3
 	github.com/itchyny/volume-go v0.2.2
 	gitlab.com/gomidi/midi/v2 v2.0.22
 )

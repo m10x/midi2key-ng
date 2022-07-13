@@ -31,6 +31,7 @@ var table *widget.Table
 var menuItemListen *fyne.MenuItem
 var btnRefresh *widget.Button
 var menuTray *fyne.Menu
+var desk desktop.App
 
 func refreshDevices() {
 	devices := getInputPorts()
@@ -80,6 +81,7 @@ func listen() {
 		btnListen.Refresh()
 		menuItemListen.Label = strStopListen
 		menuTray.Refresh()
+		desk.SetSystemTrayIcon(resourceMidiOnPng)
 		btnRefresh.Disable()
 		comboSelect.Disable()
 		btnAddRow.Disable()
@@ -92,6 +94,7 @@ func listen() {
 		btnListen.Refresh()
 		menuItemListen.Label = strStartListen
 		menuTray.Refresh()
+		desk.SetSystemTrayIcon(resourceMidiOffPng)
 		btnRefresh.Enable()
 		comboSelect.Enable()
 		btnAddRow.Enable()
@@ -237,13 +240,15 @@ func main() {
 
 	refreshDevices()
 
-	if desk, ok := a.(desktop.App); ok {
+	var ok bool
+	if desk, ok = a.(desktop.App); ok {
 		menuItemListen = fyne.NewMenuItem(strStartListen, listen)
 		menuTray = fyne.NewMenu("midi2key-ng",
 			fyne.NewMenuItem("Show", func() {
 				w.Show()
 			}), menuItemListen)
 		desk.SetSystemTrayMenu(menuTray)
+		desk.SetSystemTrayIcon(resourceMidiOffPng)
 	}
 
 	w.ShowAndRun()
