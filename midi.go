@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"gitlab.com/gomidi/midi/v2"
@@ -13,7 +15,11 @@ import (
 
 var stop func() = nil
 var out drivers.Out
-var keyMap map[uint8]int
+var mapHotkeys map[uint8]string
+var mapVelocity map[uint8]uint8
+var mapCurrentVelocity map[uint8]uint8
+
+var errMidiInAlsa = "MidiInAlsa: message queue limit reached!!"
 
 func initialize() string {
 	rtmididrv.New() // Not needed, but rtmididrv needs to be called, so the import doesn't get removed
@@ -39,7 +45,93 @@ func getInputPorts() []string {
 	return ports
 }
 
-func startListen(device string) string {
+func getOneInput(device string) string {
+	// prepare to listen ---------
+	inPort := device
+	in, err := midi.FindInPort(inPort)
+	if err != nil {
+		fmt.Println("can't find " + inPort)
+		return "can't find " + inPort
+	}
+
+	returnVal := ""
+	var m sync.Mutex
+
+	stop, err = midi.ListenTo(in, func(msg midi.Message, timestampms int32) {
+		var bt []byte
+		var ch, key, vel uint8
+		switch {
+		case msg.GetSysEx(&bt):
+			fmt.Printf("got sysex: % X\n", bt)
+		case msg.GetNoteStart(&ch, &key, &vel):
+			m.Lock()
+			returnVal = strconv.Itoa(int(key))
+			fmt.Println(returnVal)
+			m.Unlock()
+			stop()
+		default:
+			fmt.Printf("received unsupported %s\n", msg)
+			m.Lock()
+			returnVal = "received unsupported" + msg.String()
+			m.Unlock()
+			stop()
+		}
+	}, midi.UseSysEx())
+
+	if err != nil && err.Error() != errMidiInAlsa {
+		fmt.Printf("ERROR midi.ListenTo: %s\n", err)
+		stop()
+		return "ERROR midi.ListenTo: " + err.Error()
+	}
+
+	for i := 0; i < 100; i++ {
+		m.Lock()
+		if returnVal != "" {
+			m.Unlock()
+			break
+		}
+		m.Unlock()
+		time.Sleep(time.Millisecond * 50)
+	}
+
+	if returnVal != "" {
+		return returnVal
+	} else {
+		return "Nothing received"
+	}
+}
+
+func doHotkey(ch uint8, key uint8) midi.Message {
+	var ok bool
+	var vel, curVel uint8
+	var hotkey string
+	if hotkey, ok = mapHotkeys[key]; !ok {
+		fmt.Printf("DoHotkey: Key %v isn't assigned to a Hotkey\n", key)
+		return nil
+	}
+	if vel, ok = mapVelocity[key]; !ok {
+		fmt.Printf("DoHotkey: Key %v isn't assigned to a Velocity\n", key)
+		return nil
+	}
+	if curVel, ok = mapCurrentVelocity[key]; !ok {
+		fmt.Printf("DoHotkey: Key %v isn't assigned to a Current Velocity\n", key)
+		return nil
+	}
+	if curVel == vel {
+		vel = 0
+	}
+	mapCurrentVelocity[key] = vel
+
+	fmt.Printf("HOTKEY: %s\n", hotkey)
+
+	msg := midi.NoteOn(ch, key, vel)
+	return msg
+}
+
+func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity map[uint8]uint8) string {
+	mapHotkeys = newMapHotkeys
+	mapVelocity = newMapVelocity
+
 	// prepare to listen ---------
 	inPort := device
 	in, err := midi.FindInPort(inPort)
@@ -63,13 +155,14 @@ func startListen(device string) string {
 	}
 
 	// turn all lights off
-	keyMap = make(map[uint8]int)
+	mapCurrentVelocity = make(map[uint8]uint8)
 	for i := 0; i < 255; i++ {
 		msg := midi.NoteOn(0, uint8(i), 0)
 		err := send(msg)
 		if err != nil {
 			fmt.Printf("ERROR send: %s\n", err)
 		}
+		mapCurrentVelocity[uint8(i)] = 0
 	}
 
 	msg := midi.NoteOn(0, uint8(37), 255)
@@ -77,8 +170,6 @@ func startListen(device string) string {
 	if err != nil {
 		fmt.Printf("ERROR send: %s\n", err)
 	}
-
-	errMidiInAlsa := "MidiInAlsa: message queue limit reached!!"
 
 	// listen ----------------------
 	stop, err = midi.ListenTo(in, func(msg midi.Message, timestampms int32) {
@@ -91,18 +182,12 @@ func startListen(device string) string {
 			fmt.Printf("got sysex: % X\n", bt)
 		case msg.GetNoteStart(&ch, &key, &vel):
 			fmt.Printf("starting note %s (int: %v) on channel %v with velocity %v\n", midi.Note(key), key, ch, vel)
-			state, ok := keyMap[key]
-			if !ok || state == 0 {
-				vel = 255
-				keyMap[key] = 1
-			} else {
-				vel = 0
-				keyMap[key] = 0
-			}
-			msg = midi.NoteOn(ch, key, vel)
-			err := send(msg)
-			if err != nil && err.Error() != errMidiInAlsa {
-				fmt.Printf("ERROR send: %s\n", err)
+			msg = doHotkey(ch, key)
+			if msg != nil {
+				err := send(msg)
+				if err != nil && err.Error() != errMidiInAlsa {
+					fmt.Printf("ERROR send: %s\n", err)
+				}
 			}
 		case msg.GetNoteEnd(&ch, &key):
 			//fmt.Printf("ending note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
@@ -129,7 +214,7 @@ func startListen(device string) string {
 		}
 	}, midi.UseSysEx())
 
-	if err != nil {
+	if err != nil && err.Error() != errMidiInAlsa {
 		fmt.Printf("ERROR midi.ListenTo: %s\n", err)
 		return "ERROR midi.ListenTo: " + err.Error()
 	}

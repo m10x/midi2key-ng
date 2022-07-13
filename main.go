@@ -11,7 +11,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var header = []string{"note", "hotkey", "description", "new2"}
+var header = []string{"key", "hotkey", "description", "velocity"}
 var data = [][]string{header}
 
 var strNoDevice = "No Device Found"
@@ -20,10 +20,13 @@ var strStopListen = "Stop Listen"
 var comboSelect *widget.Select
 var comboHotkey *widget.Select
 var btnListen *widget.Button
+var btnNote *widget.Button
 var btnAddRow *widget.Button
 var btnDeleteRow *widget.Button
 var btnEditRow *widget.Button
 var selectedCell widget.TableCellID
+var popupHotkey *widget.PopUp
+var table *widget.Table
 
 func refreshDevices() {
 	devices := getInputPorts()
@@ -32,6 +35,38 @@ func refreshDevices() {
 	}
 	comboSelect.Options = devices
 	comboSelect.SetSelectedIndex(0)
+}
+
+func getMapHotkeys() map[uint8]string {
+	m := make(map[uint8]string)
+
+	for i := 1; i < len(data); i++ {
+		key, err := strconv.Atoi(data[i][0])
+		if err != nil {
+			fmt.Printf("ERROR getMapHotkeys: %s\n", err)
+		}
+		m[uint8(key)] = data[i][1]
+	}
+
+	return m
+}
+
+func getMapVelocity() map[uint8]uint8 {
+	m := make(map[uint8]uint8)
+
+	for i := 1; i < len(data); i++ {
+		key, err := strconv.Atoi(data[i][0])
+		if err != nil {
+			fmt.Printf("ERROR getMapVelocity: %s\n", err)
+		}
+		velocity, err := strconv.Atoi(data[i][3])
+		if err != nil {
+			fmt.Printf("ERROR getMapVelocity: %s\n", err)
+		}
+		m[uint8(key)] = uint8(velocity)
+	}
+
+	return m
 }
 
 func main() {
@@ -56,7 +91,7 @@ func main() {
 
 	btnListen = widget.NewButton(strStartListen, func() {
 		if btnListen.Text == strStartListen {
-			startListen(comboSelect.Selected)
+			startListen(comboSelect.Selected, getMapHotkeys(), getMapVelocity())
 			btnListen.Text = strStopListen
 			btnListen.Refresh()
 			btnRefresh.Disable()
@@ -79,7 +114,7 @@ func main() {
 
 	hBoxSelect := container.NewHBox(btnRefresh, btnListen)
 
-	table := widget.NewTable(
+	table = widget.NewTable(
 		func() (int, int) {
 			return len(data), len(data[0])
 		},
@@ -96,8 +131,7 @@ func main() {
 	}
 
 	btnAddRow = widget.NewButton("Add Row", func() {
-		dataLen := strconv.Itoa(len(data))
-		data = append(data, []string{dataLen, dataLen, dataLen, dataLen})
+		data = append(data, []string{"Assign", "None", "", "255"})
 		table.Refresh()
 	})
 	btnDeleteRow = widget.NewButton("Delete Row", func() {
@@ -114,59 +148,62 @@ func main() {
 		if selectedCell.Row == 0 {
 			return
 		}
-		btnAddRow.Disable()
-		btnDeleteRow.Disable()
-		btnEditRow.Disable()
-		comboSelect.Disable()
-		btnRefresh.Disable()
-		btnListen.Disable()
 
 		rowToEdit := selectedCell.Row
-		popupEdit := a.NewWindow("Edit Row")
-		popupEdit.Resize(fyne.NewSize(400, 300))
-		popupEdit.SetOnClosed(func() {
-			btnAddRow.Enable()
-			btnDeleteRow.Enable()
-			btnEditRow.Enable()
-			btnListen.Enable()
-			if btnListen.Text == strStartListen {
-				comboSelect.Enable()
-				btnRefresh.Enable()
-			}
-		})
+		popupEdit := widget.NewModalPopUp(nil, w.Canvas())
 
 		lblNote := widget.NewLabel("Note:")
-		btnNote := widget.NewButton("Press this Button", nil)
+		btnNote = widget.NewButton("Press this Button", func() {
+			btnNote.Text = "Listening for Input..."
+			btnNote.Disable()
+			btnNote.Text = getOneInput(comboSelect.Selected)
+			btnNote.Enable()
+		})
 		lblDescription := widget.NewLabel("Description:")
 		entryDescription := widget.NewEntry()
 		lblHotkey := widget.NewLabel("Hotkey:")
 		entryHotkey := widget.NewEntry()
 		comboHotkey = widget.NewSelect([]string{"Command Line Command", "Keypress (combo)", "Audio Control"}, func(value string) {
-			if comboHotkey.SelectedIndex() == -1 {
-				entryHotkey.Disable()
-			} else {
-				entryHotkey.Enable()
-				// TODO: Add Popup to speficy the wanted hotkey. Eg. if Audio Control: Popup to choose if Mute, Volume Up, Volume Down
+			// TODO: Add Popup to speficy the wanted hotkey. Eg. if Audio Control: Popup to choose if Mute, Volume Up, Volume Down
+			if comboHotkey.SelectedIndex() == 0 {
+				entryHotkey.Text = "Enter Command Here"
+				entryHotkey.Refresh()
+			} else if comboHotkey.SelectedIndex() == 2 {
+				comboSound := widget.NewSelect([]string{"(Un)Mute", "+10%", "-10%"}, nil)
+				btnSaveHotkey := widget.NewButton("Save", func() {
+					entryHotkey.Text = comboSound.Selected
+					entryHotkey.Refresh()
+					popupHotkey.Hide()
+				})
+				btnCancelHotkey := widget.NewButton("Cancel", func() {
+					popupHotkey.Hide()
+				})
+				popupHotkey = widget.NewModalPopUp(container.NewVBox(comboSound, container.NewHBox(btnSaveHotkey, btnCancelHotkey)), popupEdit.Canvas)
+				popupHotkey.Show()
 			}
 		})
-		comboHotkey.SetSelectedIndex(0)
+		lblVelocity := widget.NewLabel("Velocity:")
+		entryVelocity := widget.NewEntry()
 
 		btnSave := widget.NewButton("Save", func() {
 			data[rowToEdit][0] = btnNote.Text
 			data[rowToEdit][1] = entryHotkey.Text
 			data[rowToEdit][2] = entryDescription.Text
+			data[rowToEdit][3] = entryVelocity.Text
 			table.Refresh()
-			popupEdit.Close()
+			popupEdit.Hide()
 		})
 		btnCancel := widget.NewButton("Cancel", func() {
-			popupEdit.Close()
+			popupEdit.Hide()
 		})
 
 		btnNote.Text = data[rowToEdit][0]
 		entryHotkey.Text = data[rowToEdit][1]
 		entryDescription.Text = data[rowToEdit][2]
+		entryVelocity.Text = data[rowToEdit][3]
 
-		popupEdit.SetContent(container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblHotkey, container.NewVBox(comboHotkey, entryHotkey), lblDescription, entryDescription), container.NewCenter(container.NewHBox(btnSave, btnCancel))))
+		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblHotkey, container.NewVBox(comboHotkey, entryHotkey), lblDescription, entryDescription, lblVelocity, entryVelocity), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
+		popupEdit.Resize(fyne.NewSize(400, 200))
 		popupEdit.Show()
 	})
 
