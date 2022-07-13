@@ -119,7 +119,7 @@ func main() {
 			return len(data), len(data[0])
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabel("wide content")
+			return widget.NewLabel("tmp")
 		},
 		func(i widget.TableCellID, o fyne.CanvasObject) {
 			o.(*widget.Label).SetText(data[i.Row][i.Col])
@@ -130,8 +130,13 @@ func main() {
 		fmt.Println("Selected Cell Col", selectedCell.Col, "Row", selectedCell.Row)
 	}
 
+	table.SetColumnWidth(0, 39)
+	table.SetColumnWidth(1, 240)
+	table.SetColumnWidth(2, 240)
+	table.SetColumnWidth(3, 70)
+
 	btnAddRow = widget.NewButton("Add Row", func() {
-		data = append(data, []string{"Assign", "None", "", "255"})
+		data = append(data, []string{"", "", "", "255"})
 		table.Refresh()
 	})
 	btnDeleteRow = widget.NewButton("Delete Row", func() {
