@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/go-vgo/robotgo"
+	"github.com/itchyny/volume-go"
 	"gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
 	"gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
@@ -117,6 +120,70 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 		fmt.Printf("DoHotkey: Key %v isn't assigned to a Current Velocity\n", key)
 		return nil
 	}
+
+	switch {
+	case strings.HasPrefix(hotkey, "Audio:"):
+		hotkey = strings.TrimSpace(strings.TrimPrefix(hotkey, "Audio:"))
+		switch {
+		case strings.HasPrefix(hotkey, "(Un)Mute"):
+			isMuted, err := volume.GetMuted()
+			if err != nil {
+				fmt.Printf("ERROR volume.GetMuted: %s\n", err)
+			}
+			if isMuted {
+				err = volume.Unmute()
+			} else {
+				err = volume.Mute()
+			}
+			if err != nil {
+				fmt.Printf("ERROR volume.(Un)Mute: %s\n", err)
+			}
+		case strings.HasPrefix(hotkey, "+"), strings.HasPrefix(hotkey, "-"):
+			val := strings.TrimSuffix(hotkey, "%")
+			val = strings.TrimSpace(val)
+			diff, err := strconv.Atoi(val)
+			if err != nil {
+				fmt.Printf("ERROR strconv.Atoi: %s\n", err)
+			}
+			volume.IncreaseVolume(diff)
+		default:
+			fmt.Printf("%s is no valid Audio command\n", hotkey)
+		}
+	case strings.HasPrefix(hotkey, "Keypress:"):
+		val := strings.TrimSpace(strings.TrimPrefix(hotkey, "Keypress:"))
+		valArr := strings.SplitN(val, ",", 2)
+
+		if len(valArr) == 1 {
+			robotgo.KeyTap(valArr[0])
+		} else if len(valArr) > 1 {
+			robotgo.KeyTap(valArr[0], strings.Split(valArr[1], ","))
+		} else {
+			fmt.Printf("%s is no valid Keypress command\n", hotkey)
+		}
+
+	case strings.HasPrefix(hotkey, "Write:"):
+		val := strings.TrimSpace(strings.TrimPrefix(hotkey, "Write:"))
+		robotgo.TypeStr(val)
+	default:
+		var cmd *exec.Cmd
+		args := strings.SplitN(hotkey, " ", 2)
+		if len(args) == 1 {
+			cmd = exec.Command(args[0])
+		} else if len(args) == 2 {
+			cmd = exec.Command(args[0], args[1])
+		} else {
+			fmt.Printf("%s is no valid command\n", hotkey)
+		}
+		stdout, err := cmd.Output()
+
+		if err != nil {
+			fmt.Println(err.Error())
+			break
+		}
+
+		fmt.Println(string(stdout))
+	}
+
 	if curVel == vel {
 		vel = 0
 	}
@@ -144,8 +211,8 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 	outPort := device
 	out, err = midi.FindOutPort(outPort)
 	if err != nil {
-		fmt.Println("can't find " + outPort)
-		return "can't find " + outPort
+		fmt.Printf("ERROR midi.FindOutPort: %s\n", err)
+		return "ERROR midi.FindOutPort:  " + err.Error()
 	}
 
 	send, err := midi.SendTo(out)

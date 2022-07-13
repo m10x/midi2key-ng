@@ -163,13 +163,19 @@ func main() {
 		entryDescription := widget.NewEntry()
 		lblHotkey := widget.NewLabel("Hotkey:")
 		entryHotkey := widget.NewEntry()
-		comboHotkey = widget.NewSelect([]string{"Command Line Command", "Keypress (combo)", "Audio Control"}, func(value string) {
+		comboHotkey = widget.NewSelect([]string{"Command Line Command", "Keypress (combo)", "Write String", "Audio Control"}, func(value string) {
 			// TODO: Add Popup to speficy the wanted hotkey. Eg. if Audio Control: Popup to choose if Mute, Volume Up, Volume Down
 			if comboHotkey.SelectedIndex() == 0 {
-				entryHotkey.Text = "Enter Command Here"
+				entryHotkey.Text = "Replace with Command"
+				entryHotkey.Refresh()
+			} else if comboHotkey.SelectedIndex() == 1 {
+				entryHotkey.Text = "Keypress: a,ctrl,alt,cmd"
 				entryHotkey.Refresh()
 			} else if comboHotkey.SelectedIndex() == 2 {
-				comboSound := widget.NewSelect([]string{"(Un)Mute", "+10%", "-10%"}, nil)
+				entryHotkey.Text = "Write: example"
+				entryHotkey.Refresh()
+			} else if comboHotkey.SelectedIndex() == 3 {
+				comboSound := widget.NewSelect([]string{"Audio: (Un)Mute", "Audio: +10%", "Audio: -10%"}, nil)
 				btnSaveHotkey := widget.NewButton("Save", func() {
 					entryHotkey.Text = comboSound.Selected
 					entryHotkey.Refresh()
