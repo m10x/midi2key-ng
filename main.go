@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
@@ -27,6 +28,9 @@ var btnEditRow *widget.Button
 var selectedCell widget.TableCellID
 var popupHotkey *widget.PopUp
 var table *widget.Table
+var menuItemListen *fyne.MenuItem
+var btnRefresh *widget.Button
+var menuTray *fyne.Menu
 
 func refreshDevices() {
 	devices := getInputPorts()
@@ -69,6 +73,33 @@ func getMapVelocity() map[uint8]uint8 {
 	return m
 }
 
+func listen() {
+	if btnListen.Text == strStartListen {
+		startListen(comboSelect.Selected, getMapHotkeys(), getMapVelocity())
+		btnListen.Text = strStopListen
+		btnListen.Refresh()
+		menuItemListen.Label = strStopListen
+		menuTray.Refresh()
+		btnRefresh.Disable()
+		comboSelect.Disable()
+		btnAddRow.Disable()
+		btnDeleteRow.Disable()
+		btnEditRow.Disable()
+
+	} else {
+		stopListen()
+		btnListen.Text = strStartListen
+		btnListen.Refresh()
+		menuItemListen.Label = strStartListen
+		menuTray.Refresh()
+		btnRefresh.Enable()
+		comboSelect.Enable()
+		btnAddRow.Enable()
+		btnDeleteRow.Enable()
+		btnEditRow.Enable()
+	}
+}
+
 func main() {
 	a := app.NewWithID("de.m10x.midi2key-ng")
 	w := a.NewWindow("midi2key-ng")
@@ -85,32 +116,11 @@ func main() {
 		}
 	})
 
-	btnRefresh := widget.NewButton("Refresh Devices", func() {
+	btnRefresh = widget.NewButton("Refresh Devices", func() {
 		refreshDevices()
 	})
 
-	btnListen = widget.NewButton(strStartListen, func() {
-		if btnListen.Text == strStartListen {
-			startListen(comboSelect.Selected, getMapHotkeys(), getMapVelocity())
-			btnListen.Text = strStopListen
-			btnListen.Refresh()
-			btnRefresh.Disable()
-			comboSelect.Disable()
-			btnAddRow.Disable()
-			btnDeleteRow.Disable()
-			btnEditRow.Disable()
-
-		} else {
-			stopListen()
-			btnListen.Text = strStartListen
-			btnListen.Refresh()
-			btnRefresh.Enable()
-			comboSelect.Enable()
-			btnAddRow.Enable()
-			btnDeleteRow.Enable()
-			btnEditRow.Enable()
-		}
-	})
+	btnListen = widget.NewButton(strStartListen, listen)
 
 	hBoxSelect := container.NewHBox(btnRefresh, btnListen)
 
@@ -226,6 +236,15 @@ func main() {
 	))
 
 	refreshDevices()
+
+	if desk, ok := a.(desktop.App); ok {
+		menuItemListen = fyne.NewMenuItem(strStartListen, listen)
+		menuTray = fyne.NewMenu("midi2key-ng",
+			fyne.NewMenuItem("Show", func() {
+				w.Show()
+			}), menuItemListen)
+		desk.SetSystemTrayMenu(menuTray)
+	}
 
 	w.ShowAndRun()
 }
