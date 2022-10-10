@@ -122,7 +122,7 @@ func dataToString() string {
 		}
 		strArr += preferencesLimitatorSecond
 	}
-	fmt.Println("dataToString: " + strArr)
+	//log.Println("dataToString: " + strArr)
 	return strArr
 }
 
@@ -130,21 +130,21 @@ func stringToData(str string) {
 	for _, d := range strings.Split(str, preferencesLimitatorSecond) {
 		dataRow := strings.Split(d, preferencesLimitatorFirst)
 		if len(dataRow) == len(data[0]) { // empty or too short dataRow will cause fyne to crash
-			fmt.Printf("DataRow: %v\n", dataRow)
+			//log.Printf("DataRow: %v\n", dataRow)
 			data = append(data, dataRow)
 		}
 	}
 }
 
 func setPreferences() {
-	fmt.Println("Set Preferences")
+	//log.Println("Set Preferences")
 	a.Preferences().SetInt("version", versionPref)
 	a.Preferences().SetString("device", comboSelect.Selected)
 	a.Preferences().SetString("data", dataToString())
 }
 
 func getPreferences() {
-	fmt.Println("Get Preferences")
+	//log.Println("Get Preferences")
 	prefVersion := a.Preferences().IntWithFallback("version", 0)
 	if prefVersion == 0 {
 		fmt.Println("No Preferences found")
@@ -153,14 +153,14 @@ func getPreferences() {
 		fmt.Println("Incompatible Preferences version")
 		return
 	}
-	fmt.Println("Found Preferences")
+	//log.Println("Found Preferences")
 
 	deviceOptions := comboSelect.Options
 	prefDevice := a.Preferences().StringWithFallback("device", "")
 	for i := 0; i < len(deviceOptions); i++ {
 		if deviceOptions[i] == prefDevice {
 			comboSelect.SetSelectedIndex(i)
-			fmt.Println("Preffered Device " + prefDevice)
+			//log.Println("Preffered Device " + prefDevice)
 		}
 	}
 	prefData := a.Preferences().StringWithFallback("data", "")

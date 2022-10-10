@@ -71,19 +71,16 @@ func getOneInput(device string) string {
 			returnVal = strconv.Itoa(int(key))
 			fmt.Println(returnVal)
 			m.Unlock()
-			stop()
 		default:
 			fmt.Printf("received unsupported %s\n", msg)
 			m.Lock()
 			returnVal = "received unsupported" + msg.String()
 			m.Unlock()
-			stop()
 		}
 	}, midi.UseSysEx())
 
 	if err != nil && err.Error() != errMidiInAlsa {
 		fmt.Printf("ERROR midi.ListenTo: %s\n", err)
-		stop()
 		return "ERROR midi.ListenTo: " + err.Error()
 	}
 
@@ -97,6 +94,7 @@ func getOneInput(device string) string {
 		time.Sleep(time.Millisecond * 50)
 	}
 
+	stop()
 	if returnVal != "" {
 		return returnVal
 	} else {
@@ -165,23 +163,14 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 		val := strings.TrimSpace(strings.TrimPrefix(hotkey, "Write:"))
 		robotgo.TypeStr(val)
 	default:
-		var cmd *exec.Cmd
-		args := strings.SplitN(hotkey, " ", 2)
-		if len(args) == 1 {
-			cmd = exec.Command(args[0])
-		} else if len(args) == 2 {
-			cmd = exec.Command(args[0], args[1])
-		} else {
-			fmt.Printf("%s is no valid command\n", hotkey)
-		}
-		stdout, err := cmd.Output()
+		stdout, err := exeCmd(hotkey)
 
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println("Error cmd.Output" + err.Error())
 			break
 		}
 
-		fmt.Println(string(stdout))
+		fmt.Println("Output: " + string(stdout))
 	}
 
 	if curVel == vel {
@@ -193,6 +182,21 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 
 	msg := midi.NoteOn(ch, key, vel)
 	return msg
+}
+
+// https://stackoverflow.com/a/20438245
+func exeCmd(cmd string) ([]byte, error) {
+	fmt.Println("command is ", cmd)
+	// splitting head => g++ parts => rest of the command
+	parts := strings.Fields(cmd)
+	head := parts[0]
+	parts = parts[1:]
+
+	out, err := exec.Command(head, parts...).Output()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity map[uint8]uint8) string {
