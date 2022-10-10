@@ -13,7 +13,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var header = []string{"key", "hotkey", "description", "velocity"}
+var header = []string{"key", "hotkey", "description", "velocity", "toggle"}
 var data = [][]string{header}
 var versionPref = 1
 
@@ -122,7 +122,6 @@ func dataToString() string {
 		}
 		strArr += preferencesLimitatorSecond
 	}
-	//log.Println("dataToString: " + strArr)
 	return strArr
 }
 
@@ -130,37 +129,32 @@ func stringToData(str string) {
 	for _, d := range strings.Split(str, preferencesLimitatorSecond) {
 		dataRow := strings.Split(d, preferencesLimitatorFirst)
 		if len(dataRow) == len(data[0]) { // empty or too short dataRow will cause fyne to crash
-			//log.Printf("DataRow: %v\n", dataRow)
 			data = append(data, dataRow)
 		}
 	}
 }
 
 func setPreferences() {
-	//log.Println("Set Preferences")
 	a.Preferences().SetInt("version", versionPref)
 	a.Preferences().SetString("device", comboSelect.Selected)
 	a.Preferences().SetString("data", dataToString())
 }
 
 func getPreferences() {
-	//log.Println("Get Preferences")
-	prefVersion := a.Preferences().IntWithFallback("version", 0)
-	if prefVersion == 0 {
+	prefVersion := a.Preferences().IntWithFallback("version", 1)
+	if prefVersion == 1 {
 		fmt.Println("No Preferences found")
 		return
 	} else if prefVersion != versionPref {
-		fmt.Println("Incompatible Preferences version")
+		fmt.Println("Incompatible Preferences Version")
 		return
 	}
-	//log.Println("Found Preferences")
 
 	deviceOptions := comboSelect.Options
 	prefDevice := a.Preferences().StringWithFallback("device", "")
 	for i := 0; i < len(deviceOptions); i++ {
 		if deviceOptions[i] == prefDevice {
 			comboSelect.SetSelectedIndex(i)
-			//log.Println("Preffered Device " + prefDevice)
 		}
 	}
 	prefData := a.Preferences().StringWithFallback("data", "")
@@ -170,7 +164,7 @@ func getPreferences() {
 func main() {
 	a = app.NewWithID("de.m10x.midi2key-ng")
 	w := a.NewWindow("midi2key-ng")
-	w.Resize(fyne.NewSize(600, 400))
+	w.Resize(fyne.NewSize(665, 400))
 
 	hello := widget.NewLabel("Hello! :)")
 
@@ -211,9 +205,10 @@ func main() {
 	table.SetColumnWidth(1, 240)
 	table.SetColumnWidth(2, 240)
 	table.SetColumnWidth(3, 70)
+	table.SetColumnWidth(4, 60)
 
 	btnAddRow = widget.NewButton("Add Row", func() {
-		data = append(data, []string{"-", "-", "-", "255"})
+		data = append(data, []string{"-", "-", "-", "255", "false"})
 		table.Refresh()
 		setPreferences()
 	})
@@ -274,12 +269,19 @@ func main() {
 		})
 		lblVelocity := widget.NewLabel("Velocity:")
 		entryVelocity := widget.NewEntry()
+		lblToggle := widget.NewLabel("Toggle:")
+		checkToggle := widget.NewCheck("Toogle LED", nil)
 
 		btnSave := widget.NewButton("Save", func() {
 			data[rowToEdit][0] = btnNote.Text
 			data[rowToEdit][1] = entryHotkey.Text
 			data[rowToEdit][2] = entryDescription.Text
 			data[rowToEdit][3] = entryVelocity.Text
+			if checkToggle.Checked {
+				data[rowToEdit][4] = "true"
+			} else {
+				data[rowToEdit][4] = "false"
+			}
 			table.Refresh()
 			popupEdit.Hide()
 			setPreferences()
@@ -292,8 +294,11 @@ func main() {
 		entryHotkey.Text = data[rowToEdit][1]
 		entryDescription.Text = data[rowToEdit][2]
 		entryVelocity.Text = data[rowToEdit][3]
+		if data[rowToEdit][4] == "true" {
+			checkToggle.Checked = true
+		}
 
-		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblHotkey, container.NewVBox(comboHotkey, entryHotkey), lblDescription, entryDescription, lblVelocity, entryVelocity), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
+		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblHotkey, container.NewVBox(comboHotkey, entryHotkey), lblDescription, entryDescription, lblVelocity, entryVelocity, lblToggle, checkToggle), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
 		popupEdit.Resize(fyne.NewSize(400, 200))
 		popupEdit.Show()
 	})
