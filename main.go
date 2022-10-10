@@ -79,9 +79,23 @@ func getMapVelocity() map[uint8]uint8 {
 	return m
 }
 
+func getMapToggle() map[uint8]string {
+	m := make(map[uint8]string)
+
+	for i := 1; i < len(data); i++ {
+		key, err := strconv.Atoi(data[i][0])
+		if err != nil {
+			fmt.Printf("ERROR getMapToogle: %s\n", err)
+		}
+		m[uint8(key)] = data[i][4]
+	}
+
+	return m
+}
+
 func listen() {
 	if btnListen.Text == strStartListen {
-		startListen(comboSelect.Selected, getMapHotkeys(), getMapVelocity())
+		startListen(comboSelect.Selected, getMapHotkeys(), getMapVelocity(), getMapToggle())
 		btnListen.Text = strStopListen
 		btnListen.Refresh()
 		menuItemListen.Label = strStopListen

@@ -20,6 +20,7 @@ var out drivers.Out
 var mapHotkeys map[uint8]string
 var mapVelocity map[uint8]uint8
 var mapCurrentVelocity map[uint8]uint8
+var mapToggle map[uint8]string
 
 var errMidiInAlsa = "MidiInAlsa: message queue limit reached!!"
 
@@ -172,14 +173,16 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 		fmt.Println("Output: " + string(stdout))
 	}
 
-	if curVel == vel {
-		vel = 0
+	fmt.Printf("HOTKEY: %s\n", hotkey)
+	var msg midi.Message
+	if mapToggle[key] == "true" {
+		if curVel == vel {
+			vel = 0
+		}
 	}
 	mapCurrentVelocity[key] = vel
+	msg = midi.NoteOn(ch, key, vel)
 
-	fmt.Printf("HOTKEY: %s\n", hotkey)
-
-	msg := midi.NoteOn(ch, key, vel)
 	return msg
 }
 
@@ -198,9 +201,10 @@ func exeCmd(cmd string) ([]byte, error) {
 	return out, nil
 }
 
-func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity map[uint8]uint8) string {
+func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity map[uint8]uint8, newMapToogle map[uint8]string) string {
 	mapHotkeys = newMapHotkeys
 	mapVelocity = newMapVelocity
+	mapToggle = newMapToogle
 
 	// prepare to listen ---------
 	inPort := device
@@ -258,6 +262,18 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 				if err != nil && err.Error() != errMidiInAlsa {
 					fmt.Printf("ERROR send: %s\n", err)
 				}
+			}
+			if mapToggle[key] == "false" {
+				go func(ch uint8, key uint8) {
+					time.Sleep(200 * time.Millisecond)
+					msg = midi.NoteOn(ch, key, 0)
+					if msg != nil {
+						err := send(msg)
+						if err != nil && err.Error() != errMidiInAlsa {
+							fmt.Printf("ERROR send: %s\n", err)
+						}
+					}
+				}(ch, key)
 			}
 		case msg.GetNoteEnd(&ch, &key):
 			//fmt.Printf("ending note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
