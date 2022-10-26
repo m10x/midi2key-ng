@@ -16,6 +16,7 @@ import (
 var header = []string{"key", "hotkey", "description", "velocity", "toggle"}
 var data = [][]string{header}
 var versionPref = 1
+var mapKeys map[string]keyStruct
 
 var strNoDevice = "No Device Found"
 var strStartListen = "Start Listen"
@@ -93,6 +94,19 @@ func getMapToggle() map[uint8]string {
 	return m
 }
 
+func selectCell(pressedKey uint8) {
+	for i, x := range data {
+		if x[0] == strconv.Itoa(int((pressedKey))) {
+			table.Select(widget.TableCellID{
+				Row: i,
+				Col: 0})
+			break
+		}
+
+	}
+
+}
+
 func listen() {
 	if btnListen.Text == strStartListen {
 		startListen(comboSelect.Selected, getMapHotkeys(), getMapVelocity(), getMapToggle())
@@ -106,7 +120,6 @@ func listen() {
 		btnAddRow.Disable()
 		btnDeleteRow.Disable()
 		btnEditRow.Disable()
-
 	} else {
 		stopListen()
 		btnListen.Text = strStartListen
@@ -180,6 +193,8 @@ func main() {
 	w := a.NewWindow("midi2key-ng")
 	w.Resize(fyne.NewSize(665, 400))
 
+	mapKeys = make(map[string]keyStruct)
+
 	hello := widget.NewLabel("Hello! :)")
 
 	comboSelect = widget.NewSelect([]string{""}, func(value string) {
@@ -233,6 +248,7 @@ func main() {
 				tmpData = append(tmpData, x)
 			}
 		}
+		delete(mapKeys, data[selectedCell.Row][0]) // delete key of selected row from the key dictionary
 		data = tmpData
 		table.Refresh()
 		setPreferences()
@@ -254,7 +270,7 @@ func main() {
 		})
 		lblDescription := widget.NewLabel("Description:")
 		entryDescription := widget.NewEntry()
-		lblHotkey := widget.NewLabel("Hotkey:")
+		lblHotkey := widget.NewLabel("Hotkey type:")
 		entryHotkey := widget.NewEntry()
 		comboHotkey = widget.NewSelect([]string{"Command Line Command", "Keypress (combo)", "Write String", "Audio Control"}, func(value string) {
 			// TODO: Add Popup to speficy the wanted hotkey. Eg. if Audio Control: Popup to choose if Mute, Volume Up, Volume Down
@@ -268,16 +284,21 @@ func main() {
 				entryHotkey.Text = "Write: example"
 				entryHotkey.Refresh()
 			} else if comboHotkey.SelectedIndex() == 3 {
-				comboSound := widget.NewSelect([]string{"Audio: (Un)Mute", "Audio: +10%", "Audio: -10%"}, nil)
+				devices := []string{"Input", "Output"}
+				for _, app := range getInputSinks() {
+					devices = append(devices, app.name)
+				}
+				comboDevice := widget.NewSelect(devices, nil)
+				comboSound := widget.NewSelect([]string{"(Un)Mute", "Volume +10%", "Volume -10%", "Volume =50%"}, nil)
 				btnSaveHotkey := widget.NewButton("Save", func() {
-					entryHotkey.Text = comboSound.Selected
+					entryHotkey.Text = "Audio: " + comboDevice.Selected + ": " + comboSound.Selected
 					entryHotkey.Refresh()
 					popupHotkey.Hide()
 				})
 				btnCancelHotkey := widget.NewButton("Cancel", func() {
 					popupHotkey.Hide()
 				})
-				popupHotkey = widget.NewModalPopUp(container.NewVBox(comboSound, container.NewHBox(btnSaveHotkey, btnCancelHotkey)), popupEdit.Canvas)
+				popupHotkey = widget.NewModalPopUp(container.NewVBox(comboDevice, comboSound, container.NewHBox(btnSaveHotkey, btnCancelHotkey)), popupEdit.Canvas)
 				popupHotkey.Show()
 			}
 		})
@@ -287,6 +308,17 @@ func main() {
 		checkToggle := widget.NewCheck("Toogle LED", nil)
 
 		btnSave := widget.NewButton("Save", func() {
+			delete(mapKeys, data[selectedCell.Row][0]) // delete old entry from map dictionary. (just in case that the key was changed)
+
+			if comboHotkey.SelectedIndex() > -1 { // only add hotkey if a hotkeytype was selected
+				mapKeys[btnNote.Text] = keyStruct{
+					key:           btnNote.Text,
+					hotkeyPayload: entryHotkey.Text,
+					velocity:      entryVelocity.Text,
+					toggle:        checkToggle.Checked,
+				}
+			}
+
 			data[rowToEdit][0] = btnNote.Text
 			data[rowToEdit][1] = entryHotkey.Text
 			data[rowToEdit][2] = entryDescription.Text

@@ -2,14 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/go-vgo/robotgo"
-	"github.com/itchyny/volume-go"
 	"gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
 	"gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
@@ -23,6 +21,13 @@ var mapCurrentVelocity map[uint8]uint8
 var mapToggle map[uint8]string
 
 var errMidiInAlsa = "MidiInAlsa: message queue limit reached!!"
+
+type keyStruct struct {
+	key           string
+	hotkeyPayload string
+	velocity      string
+	toggle        bool
+}
 
 func initialize() string {
 	rtmididrv.New() // Not needed, but rtmididrv needs to be called, so the import doesn't get removed
@@ -122,28 +127,52 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 	switch {
 	case strings.HasPrefix(hotkey, "Audio:"):
 		hotkey = strings.TrimSpace(strings.TrimPrefix(hotkey, "Audio:"))
+		hotkeyArr := strings.SplitN(hotkey, ":", 2)
+		device := strings.TrimSpace(hotkeyArr[0])
+		action := strings.TrimSpace(hotkeyArr[1])
 		switch {
-		case strings.HasPrefix(hotkey, "(Un)Mute"):
-			isMuted, err := volume.GetMuted()
-			if err != nil {
-				fmt.Printf("ERROR volume.GetMuted: %s\n", err)
+		case action == "(Un)Mute":
+			switch {
+			case device == "Input":
+				exeCmd("amixer set Capture toggle")
+			case device == "Output":
+				exeCmd("amixer set Master toggle")
+			default:
+				for _, x := range getInputSinks() {
+					if x.name == device {
+						exeCmd("pactl set-sink-input-mute " + x.index + " toggle")
+					}
+				}
 			}
-			if isMuted {
-				err = volume.Unmute()
-			} else {
-				err = volume.Mute()
+		case strings.Contains(action, "+"), strings.Contains(action, "-"):
+			action = strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
+			switch {
+			case device == "Input":
+				exeCmd("amixer set Capture " + action[1:] + action[0:1])
+			case device == "Output":
+				exeCmd("amixer set Master " + action[1:] + action[0:1])
+			default:
+				for _, x := range getInputSinks() {
+					if x.name == device {
+						exeCmd("pactl set-sink-input-volume " + x.index + " " + action)
+					}
+				}
 			}
-			if err != nil {
-				fmt.Printf("ERROR volume.(Un)Mute: %s\n", err)
+		case strings.Contains(action, "="):
+			action = strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
+			action = strings.TrimSpace(strings.TrimPrefix(action, "="))
+			switch {
+			case device == "Input":
+				exeCmd("amixer set Capture " + action)
+			case device == "Output":
+				exeCmd("amixer set Master " + action)
+			default:
+				for _, x := range getInputSinks() {
+					if x.name == device {
+						exeCmd("pactl set-sink-input-volume " + x.index + " " + action)
+					}
+				}
 			}
-		case strings.HasPrefix(hotkey, "+"), strings.HasPrefix(hotkey, "-"):
-			val := strings.TrimSuffix(hotkey, "%")
-			val = strings.TrimSpace(val)
-			diff, err := strconv.Atoi(val)
-			if err != nil {
-				fmt.Printf("ERROR strconv.Atoi: %s\n", err)
-			}
-			volume.IncreaseVolume(diff)
 		default:
 			fmt.Printf("%s is no valid Audio command\n", hotkey)
 		}
@@ -184,21 +213,6 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 	msg = midi.NoteOn(ch, key, vel)
 
 	return msg
-}
-
-// https://stackoverflow.com/a/20438245
-func exeCmd(cmd string) ([]byte, error) {
-	fmt.Println("command is ", cmd)
-	// splitting head => g++ parts => rest of the command
-	parts := strings.Fields(cmd)
-	head := parts[0]
-	parts = parts[1:]
-
-	out, err := exec.Command(head, parts...).Output()
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity map[uint8]uint8, newMapToogle map[uint8]string) string {
@@ -256,6 +270,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			fmt.Printf("got sysex: % X\n", bt)
 		case msg.GetNoteStart(&ch, &key, &vel):
 			fmt.Printf("starting note %s (int: %v) on channel %v with velocity %v\n", midi.Note(key), key, ch, vel)
+			selectCell(key)
 			msg = doHotkey(ch, key)
 			if msg != nil {
 				err := send(msg)
