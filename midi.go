@@ -20,7 +20,7 @@ var mapVelocity map[uint8]uint8
 var mapCurrentVelocity map[uint8]uint8
 var mapToggle map[uint8]string
 
-var errMidiInAlsa = "MidiInAlsa: message queue limit reached!!"
+var errMidiInAlsa = "message queue limit reached"
 
 type keyStruct struct {
 	key           string
@@ -274,7 +274,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			msg = doHotkey(ch, key)
 			if msg != nil {
 				err := send(msg)
-				if err != nil && err.Error() != errMidiInAlsa {
+				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
 					fmt.Printf("ERROR send: %s\n", err)
 				}
 			}
@@ -284,7 +284,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 					msg = midi.NoteOn(ch, key, 0)
 					if msg != nil {
 						err := send(msg)
-						if err != nil && err.Error() != errMidiInAlsa {
+						if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
 							fmt.Printf("ERROR send: %s\n", err)
 						}
 					}
@@ -297,7 +297,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			/* not needed as this doesn't effect the lightning of the control
 			msg = midi.NoteOn(ch, cc, 60)
 			err := send(msg)
-			if err != nil && err.Error() != errMidiInAlsa {
+			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
 				fmt.Printf("ERROR send: %s\n", err)
 			}
 			*/
@@ -306,7 +306,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			/* Not needed as slider has no lightning
 			msg = midi.Pitchbend(ch, rel)
 			err := send(msg)
-			if err != nil && err.Error() != errMidiInAlsa {
+			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
 				fmt.Printf("ERROR send: %s\n", err)
 			}
 			*/
@@ -315,7 +315,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 		}
 	}, midi.UseSysEx())
 
-	if err != nil && err.Error() != errMidiInAlsa {
+	if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
 		fmt.Printf("ERROR midi.ListenTo: %s\n", err)
 		return "ERROR midi.ListenTo: " + err.Error()
 	}
