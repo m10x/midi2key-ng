@@ -11,6 +11,7 @@ import (
 	"gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
 	"gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
+	//"gitlab.com/gomidi/midi/v2/drivers/portmididrv" // autoregisters driver
 )
 
 var stop func() = nil
@@ -31,6 +32,7 @@ type keyStruct struct {
 
 func initialize() string {
 	rtmididrv.New() // Not needed, but rtmididrv needs to be called, so the import doesn't get removed
+	//portmididrv.New()
 	return ""
 }
 
