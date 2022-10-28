@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -34,14 +34,14 @@ type keyStruct struct {
 func getInputPorts() []string {
 	var ports []string
 
-	fmt.Println(midi.GetInPorts().String())
+	log.Println(midi.GetInPorts().String())
 	portArr := strings.Split(midi.GetInPorts().String(), "]")
 	for i := len(portArr) - 1; i > 0; i-- {
 		port := strings.Split(portArr[i], ":")[0]
 		ports = append(ports, strings.TrimSpace(port))
 	}
 
-	fmt.Println(ports)
+	log.Println(ports)
 
 	return ports
 }
@@ -51,7 +51,7 @@ func getOneInput(device string) string {
 	inPort := device
 	in, err := midi.FindInPort(inPort)
 	if err != nil {
-		fmt.Println("can't find " + inPort)
+		log.Println("can't find " + inPort)
 		return "can't find " + inPort
 	}
 
@@ -63,14 +63,14 @@ func getOneInput(device string) string {
 		var ch, key, vel uint8
 		switch {
 		case msg.GetSysEx(&bt):
-			fmt.Printf("got sysex: % X\n", bt)
+			log.Printf("got sysex: % X\n", bt)
 		case msg.GetNoteStart(&ch, &key, &vel), msg.GetNoteOn(&ch, &key, &vel):
 			m.Lock()
 			returnVal = strconv.Itoa(int(key))
-			fmt.Println(returnVal)
+			log.Println(returnVal)
 			m.Unlock()
 		default:
-			fmt.Printf("received unsupported %s\n", msg)
+			log.Printf("received unsupported %s\n", msg)
 			m.Lock()
 			returnVal = "received unsupported" + msg.String()
 			m.Unlock()
@@ -78,7 +78,7 @@ func getOneInput(device string) string {
 	}, midi.UseSysEx())
 
 	if err != nil && err.Error() != errMidiInAlsa {
-		fmt.Printf("ERROR midi.ListenTo: %s\n", err)
+		log.Printf("ERROR midi.ListenTo: %s\n", err)
 		return "ERROR midi.ListenTo: " + err.Error()
 	}
 
@@ -105,15 +105,15 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 	var vel, curVel uint8
 	var hotkey string
 	if hotkey, ok = mapHotkeys[key]; !ok {
-		fmt.Printf("DoHotkey: Key %v isn't assigned to a Hotkey\n", key)
+		log.Printf("DoHotkey: Key %v isn't assigned to a Hotkey\n", key)
 		return nil
 	}
 	if vel, ok = mapVelocity[key]; !ok {
-		fmt.Printf("DoHotkey: Key %v isn't assigned to a Velocity\n", key)
+		log.Printf("DoHotkey: Key %v isn't assigned to a Velocity\n", key)
 		return nil
 	}
 	if curVel, ok = mapCurrentVelocity[key]; !ok {
-		fmt.Printf("DoHotkey: Key %v isn't assigned to a Current Velocity\n", key)
+		log.Printf("DoHotkey: Key %v isn't assigned to a Current Velocity\n", key)
 		return nil
 	}
 
@@ -138,7 +138,7 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
 						exeCmd("pactl set-source-volume " + x.name + " " + actionTrimmed)
 					default:
-						fmt.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
+						log.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
 					}
 				}
 			}
@@ -156,7 +156,7 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
 						exeCmd("pactl set-sink-volume " + x.name + " " + actionTrimmed)
 					default:
-						fmt.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
+						log.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
 					}
 				}
 			}
@@ -174,12 +174,12 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
 						exeCmd("pactl set-sink-input-volume " + x.index + " " + actionTrimmed)
 					default:
-						fmt.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
+						log.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
 					}
 				}
 			}
 		default:
-			fmt.Printf("Device-Type %s is unkown\n", device)
+			log.Printf("Device-Type %s is unkown\n", device)
 		}
 	case strings.HasPrefix(hotkey, "Keypress:"):
 		val := strings.TrimSpace(strings.TrimPrefix(hotkey, "Keypress:"))
@@ -190,7 +190,7 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 		} else if len(valArr) > 1 {
 			robotgo.KeyTap(valArr[0], strings.Split(valArr[1], ","))
 		} else {
-			fmt.Printf("%s is no valid Keypress command\n", hotkey)
+			log.Printf("%s is no valid Keypress command\n", hotkey)
 		}
 
 	case strings.HasPrefix(hotkey, "Write:"):
@@ -200,14 +200,14 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 		stdout, err := exeCmd(hotkey)
 
 		if err != nil {
-			fmt.Println("Error cmd.Output" + err.Error())
+			log.Println("Error cmd.Output" + err.Error())
 			break
 		}
 
-		fmt.Println("Output: " + string(stdout))
+		log.Println("Output: " + string(stdout))
 	}
 
-	fmt.Printf("HOTKEY: %s\n", hotkey)
+	log.Printf("HOTKEY: %s\n", hotkey)
 	var msg midi.Message
 	if mapToggle[key] == "true" {
 		if curVel == vel {
@@ -229,7 +229,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 	inPort := device
 	in, err := midi.FindInPort(inPort)
 	if err != nil {
-		fmt.Println("can't find " + inPort)
+		log.Println("can't find " + inPort)
 		return "can't find " + inPort
 	}
 
@@ -237,13 +237,13 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 	outPort := device
 	out, err = midi.FindOutPort(outPort)
 	if err != nil {
-		fmt.Printf("ERROR midi.FindOutPort: %s\n", err)
+		log.Printf("ERROR midi.FindOutPort: %s\n", err)
 		return "ERROR midi.FindOutPort:  " + err.Error()
 	}
 
 	send, err := midi.SendTo(out)
 	if err != nil {
-		fmt.Printf("ERROR midi.SendTo: %s\n", err)
+		log.Printf("ERROR midi.SendTo: %s\n", err)
 		return "ERROR midi.SendTo: " + err.Error()
 	}
 
@@ -253,7 +253,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 		msg := midi.NoteOn(0, uint8(i), 0)
 		err := send(msg)
 		if err != nil {
-			fmt.Printf("ERROR send: %s\n", err)
+			log.Printf("ERROR send: %s\n", err)
 		}
 		mapCurrentVelocity[uint8(i)] = 0
 	}
@@ -261,7 +261,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 	msg := midi.NoteOn(0, uint8(37), 255)
 	err = send(msg)
 	if err != nil {
-		fmt.Printf("ERROR send: %s\n", err)
+		log.Printf("ERROR send: %s\n", err)
 	}
 
 	// listen ----------------------
@@ -272,15 +272,15 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 		var abs uint16
 		switch {
 		case msg.GetSysEx(&bt):
-			fmt.Printf("got sysex: % X\n", bt)
+			log.Printf("got sysex: % X\n", bt)
 		case msg.GetNoteStart(&ch, &key, &vel):
-			fmt.Printf("starting note %s (int: %v) on channel %v with velocity %v\n", midi.Note(key), key, ch, vel)
+			log.Printf("starting note %s (int: %v) on channel %v with velocity %v\n", midi.Note(key), key, ch, vel)
 			selectCell(key)
 			msg = doHotkey(ch, key)
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
-					fmt.Printf("ERROR send: %s\n", err)
+					log.Printf("ERROR send: %s\n", err)
 				}
 			}
 			if mapToggle[key] == "false" {
@@ -290,38 +290,38 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 					if msg != nil {
 						err := send(msg)
 						if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
-							fmt.Printf("ERROR send: %s\n", err)
+							log.Printf("ERROR send: %s\n", err)
 						}
 					}
 				}(ch, key)
 			}
 		case msg.GetNoteEnd(&ch, &key):
-			//fmt.Printf("ending note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
+			//log.Printf("ending note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
 		case msg.GetControlChange(&ch, &cc, &val):
-			fmt.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
+			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
 			/* not needed as this doesn't effect the lightning of the control
 			msg = midi.NoteOn(ch, cc, 60)
 			err := send(msg)
 			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
-				fmt.Printf("ERROR send: %s\n", err)
+				log.Printf("ERROR send: %s\n", err)
 			}
 			*/
 		case msg.GetPitchBend(&ch, &rel, &abs):
-			fmt.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
+			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
 			/* Not needed as slider has no lightning
 			msg = midi.Pitchbend(ch, rel)
 			err := send(msg)
 			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
-				fmt.Printf("ERROR send: %s\n", err)
+				log.Printf("ERROR send: %s\n", err)
 			}
 			*/
 		default:
-			fmt.Printf("received unsupported %s\n", msg)
+			log.Printf("received unsupported %s\n", msg)
 		}
 	}, midi.UseSysEx())
 
 	if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
-		fmt.Printf("ERROR midi.ListenTo: %s\n", err)
+		log.Printf("ERROR midi.ListenTo: %s\n", err)
 		return "ERROR midi.ListenTo: " + err.Error()
 	}
 
@@ -332,12 +332,12 @@ func stopListen() string {
 	if out != nil {
 		out.Close()
 	} else {
-		fmt.Println("out is nil")
+		log.Println("out is nil")
 	}
 	if stop != nil {
 		stop()
 	} else {
-		fmt.Println("stop is nil")
+		log.Println("stop is nil")
 	}
 	return ""
 }

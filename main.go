@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -54,7 +54,7 @@ func getMapHotkeys() map[uint8]string {
 	for i := 1; i < len(data); i++ {
 		key, err := strconv.Atoi(data[i][0])
 		if err != nil {
-			fmt.Printf("ERROR getMapHotkeys: %s\n", err)
+			log.Printf("ERROR getMapHotkeys: %s\n", err)
 		}
 		m[uint8(key)] = data[i][1]
 	}
@@ -68,11 +68,11 @@ func getMapVelocity() map[uint8]uint8 {
 	for i := 1; i < len(data); i++ {
 		key, err := strconv.Atoi(data[i][0])
 		if err != nil {
-			fmt.Printf("ERROR getMapVelocity: %s\n", err)
+			log.Printf("ERROR getMapVelocity: %s\n", err)
 		}
 		velocity, err := strconv.Atoi(data[i][3])
 		if err != nil {
-			fmt.Printf("ERROR getMapVelocity: %s\n", err)
+			log.Printf("ERROR getMapVelocity: %s\n", err)
 		}
 		m[uint8(key)] = uint8(velocity)
 	}
@@ -86,7 +86,7 @@ func getMapToggle() map[uint8]string {
 	for i := 1; i < len(data); i++ {
 		key, err := strconv.Atoi(data[i][0])
 		if err != nil {
-			fmt.Printf("ERROR getMapToogle: %s\n", err)
+			log.Printf("ERROR getMapToogle: %s\n", err)
 		}
 		m[uint8(key)] = data[i][4]
 	}
@@ -170,10 +170,10 @@ func setPreferences() {
 func getPreferences() {
 	prefVersion := a.Preferences().IntWithFallback("version", 1)
 	if prefVersion == 1 {
-		fmt.Println("No Preferences found")
+		log.Println("No Preferences found")
 		return
 	} else if prefVersion != versionPref {
-		fmt.Println("Incompatible Preferences Version")
+		log.Println("Incompatible Preferences Version")
 		return
 	}
 
@@ -198,7 +198,7 @@ func main() {
 	hello := widget.NewLabel("Hello! :)")
 
 	comboSelect = widget.NewSelect([]string{""}, func(value string) {
-		fmt.Sprintln("Selected midi device " + value)
+		log.Println("Selected midi device " + value)
 		if comboSelect.Selected != strNoDevice {
 			btnListen.Enable()
 		} else {
@@ -227,7 +227,7 @@ func main() {
 
 	table.OnSelected = func(id widget.TableCellID) {
 		selectedCell = id
-		fmt.Println("Selected Cell Col", selectedCell.Col, "Row", selectedCell.Row)
+		log.Println("Selected Cell Col", selectedCell.Col, "Row", selectedCell.Row)
 	}
 
 	table.SetColumnWidth(0, 39)

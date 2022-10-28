@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -22,7 +22,7 @@ type applicationSinkStruct struct {
 
 // https://stackoverflow.com/a/20438245
 func exeCmd(cmd string) ([]byte, error) {
-	fmt.Printf("command is %s\n", cmd)
+	log.Printf("command is %s\n", cmd)
 	// splitting head => g++ parts => rest of the command
 	parts := strings.Fields(cmd)
 	head := parts[0]
@@ -39,7 +39,7 @@ func exeCmd(cmd string) ([]byte, error) {
 func getSinks() []applicationSinkStruct {
 	out, err := exeCmd("pactl list sinks")
 	if err != nil {
-		fmt.Println("Error in getSinks, while executing command: " + err.Error())
+		log.Println("Error in getSinks, while executing command: " + err.Error())
 	}
 	outStr := strings.Split(string(out), "Sink #")
 
@@ -58,7 +58,7 @@ func getSinks() []applicationSinkStruct {
 		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
 			addApp.volume = sinkVolume
 		} else {
-			fmt.Println("Error in getSinks, while converting Volume String to int: " + err.Error())
+			log.Println("Error in getSinks, while converting Volume String to int: " + err.Error())
 		}
 		addApp.typ = SINK
 
@@ -71,7 +71,7 @@ func getSinks() []applicationSinkStruct {
 func getSources() []applicationSinkStruct {
 	out, err := exeCmd("pactl list sources")
 	if err != nil {
-		fmt.Println("Error in getSources, while executing command: " + err.Error())
+		log.Println("Error in getSources, while executing command: " + err.Error())
 	}
 	outStr := strings.Split(string(out), "Source #")
 
@@ -90,7 +90,7 @@ func getSources() []applicationSinkStruct {
 		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
 			addApp.volume = sinkVolume
 		} else {
-			fmt.Println("Error in getSources, while converting Volume String to int: " + err.Error())
+			log.Println("Error in getSources, while converting Volume String to int: " + err.Error())
 		}
 		addApp.typ = SOURCE
 
@@ -103,7 +103,7 @@ func getSources() []applicationSinkStruct {
 func getSinkInputs() []applicationSinkStruct {
 	out, err := exeCmd("pactl list sink-inputs")
 	if err != nil {
-		fmt.Println("Error in getSinkInputs, while executing command: " + err.Error())
+		log.Println("Error in getSinkInputs, while executing command: " + err.Error())
 	}
 	outStr := strings.Split(string(out), "Sink Input #")
 
@@ -122,7 +122,7 @@ func getSinkInputs() []applicationSinkStruct {
 		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
 			addApp.volume = sinkVolume
 		} else {
-			fmt.Println("Error in getSinkInputs, while converting Volume String to int: " + err.Error())
+			log.Println("Error in getSinkInputs, while converting Volume String to int: " + err.Error())
 		}
 		addApp.typ = SINK_INPUT
 
