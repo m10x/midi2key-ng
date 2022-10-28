@@ -6,7 +6,12 @@
 
 ## About
 
-Map Midikeys to Hotkeys. With GUI. Crossplattform. 
+Map Midikeys to Hotkeys. With GUI. Crossplatform for Linux, Windows and MacOS. (Audio Control is currently only available for Linux!).
+
+## Roadmap
+- export / import Key Mapping
+- add Windows Audio Control
+- add MacOS Audio Control
 
 ## Credits
 
@@ -22,7 +27,3 @@ https://pkg.go.dev/gitlab.com/gomidi/midi/v2
 ### Simulate Keyboard + Mouse
 **robot-go**
 https://github.com/go-vgo/robotgo
-
-### Cross Plattform Volume Control
-**volume-go**  
-https://github.com/itchyny/volume-go
