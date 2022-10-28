@@ -284,9 +284,15 @@ func main() {
 				entryHotkey.Text = "Write: example"
 				entryHotkey.Refresh()
 			} else if comboHotkey.SelectedIndex() == 3 {
-				devices := []string{"Input", "Output"}
-				for _, app := range getInputSinks() {
-					devices = append(devices, app.name)
+				devices := []string{}
+				for _, sink := range getSinks() {
+					devices = append(devices, sink.description)
+				}
+				for _, source := range getSources() {
+					devices = append(devices, source.description)
+				}
+				for _, inputSink := range getSinkInputs() {
+					devices = append(devices, inputSink.description)
 				}
 				comboDevice := widget.NewSelect(devices, nil)
 				comboSound := widget.NewSelect([]string{"(Un)Mute", "Volume +10%", "Volume -10%", "Volume =50%"}, nil)

@@ -10,8 +10,9 @@ import (
 	"github.com/go-vgo/robotgo"
 	"gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
-	"gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
-	//"gitlab.com/gomidi/midi/v2/drivers/portmididrv" // autoregisters driver
+
+	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver
+	//_ "gitlab.com/gomidi/midi/v2/drivers/portmididrv" // autoregisters driver
 )
 
 var stop func() = nil
@@ -30,20 +31,10 @@ type keyStruct struct {
 	toggle        bool
 }
 
-func initialize() string {
-	rtmididrv.New() // Not needed, but rtmididrv needs to be called, so the import doesn't get removed
-	//portmididrv.New()
-	return ""
-}
-
-func closeDriver() {
-	stopListen()
-	midi.CloseDriver()
-}
-
 func getInputPorts() []string {
 	var ports []string
 
+	fmt.Println(midi.GetInPorts().String())
 	portArr := strings.Split(midi.GetInPorts().String(), "]")
 	for i := len(portArr) - 1; i > 0; i-- {
 		port := strings.Split(portArr[i], ":")[0]
@@ -73,7 +64,7 @@ func getOneInput(device string) string {
 		switch {
 		case msg.GetSysEx(&bt):
 			fmt.Printf("got sysex: % X\n", bt)
-		case msg.GetNoteStart(&ch, &key, &vel):
+		case msg.GetNoteStart(&ch, &key, &vel), msg.GetNoteOn(&ch, &key, &vel):
 			m.Lock()
 			returnVal = strconv.Itoa(int(key))
 			fmt.Println(returnVal)
@@ -101,7 +92,7 @@ func getOneInput(device string) string {
 		time.Sleep(time.Millisecond * 50)
 	}
 
-	stop()
+	in.Close()
 	if returnVal != "" {
 		return returnVal
 	} else {
@@ -129,54 +120,66 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 	switch {
 	case strings.HasPrefix(hotkey, "Audio:"):
 		hotkey = strings.TrimSpace(strings.TrimPrefix(hotkey, "Audio:"))
-		hotkeyArr := strings.SplitN(hotkey, ":", 2)
-		device := strings.TrimSpace(hotkeyArr[0])
-		action := strings.TrimSpace(hotkeyArr[1])
+		hotkeyArr := strings.SplitN(hotkey, ":", 3)
+		device := strings.TrimSpace(hotkeyArr[0] + ":" + hotkeyArr[1])
+		action := strings.TrimSpace(hotkeyArr[2])
 		switch {
-		case action == "(Un)Mute":
-			switch {
-			case device == "Input":
-				exeCmd("amixer set Capture toggle")
-			case device == "Output":
-				exeCmd("amixer set Master toggle")
-			default:
-				for _, x := range getInputSinks() {
-					if x.name == device {
+		case strings.HasPrefix(device, "In:"):
+			for _, x := range getSources() {
+				if x.description == device {
+					switch {
+					case action == "(Un)Mute":
+						exeCmd("pactl set-source-mute " + x.name + " toggle")
+					case strings.Contains(action, "+"), strings.Contains(action, "-"):
+						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
+						exeCmd("pactl set-source-volume " + x.name + " " + actionTrimmed)
+					case strings.Contains(action, "="):
+						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
+						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
+						exeCmd("pactl set-source-volume " + x.name + " " + actionTrimmed)
+					default:
+						fmt.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
+					}
+				}
+			}
+		case strings.HasPrefix(device, "Out:"):
+			for _, x := range getSinks() {
+				if x.description == device {
+					switch {
+					case action == "(Un)Mute":
+						exeCmd("pactl set-sink-mute " + x.name + " toggle")
+					case strings.Contains(action, "+"), strings.Contains(action, "-"):
+						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
+						exeCmd("pactl set-sink-volume " + x.name + " " + actionTrimmed)
+					case strings.Contains(action, "="):
+						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
+						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
+						exeCmd("pactl set-sink-volume " + x.name + " " + actionTrimmed)
+					default:
+						fmt.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
+					}
+				}
+			}
+		case strings.HasPrefix(device, "App:"):
+			for _, x := range getSinkInputs() {
+				if x.description == device {
+					switch {
+					case action == "(Un)Mute":
 						exeCmd("pactl set-sink-input-mute " + x.index + " toggle")
-					}
-				}
-			}
-		case strings.Contains(action, "+"), strings.Contains(action, "-"):
-			action = strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
-			switch {
-			case device == "Input":
-				exeCmd("amixer set Capture " + action[1:] + action[0:1])
-			case device == "Output":
-				exeCmd("amixer set Master " + action[1:] + action[0:1])
-			default:
-				for _, x := range getInputSinks() {
-					if x.name == device {
-						exeCmd("pactl set-sink-input-volume " + x.index + " " + action)
-					}
-				}
-			}
-		case strings.Contains(action, "="):
-			action = strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
-			action = strings.TrimSpace(strings.TrimPrefix(action, "="))
-			switch {
-			case device == "Input":
-				exeCmd("amixer set Capture " + action)
-			case device == "Output":
-				exeCmd("amixer set Master " + action)
-			default:
-				for _, x := range getInputSinks() {
-					if x.name == device {
-						exeCmd("pactl set-sink-input-volume " + x.index + " " + action)
+					case strings.Contains(action, "+"), strings.Contains(action, "-"):
+						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
+						exeCmd("pactl set-sink-input-volume " + x.index + " " + actionTrimmed)
+					case strings.Contains(action, "="):
+						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
+						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
+						exeCmd("pactl set-sink-input-volume " + x.index + " " + actionTrimmed)
+					default:
+						fmt.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
 					}
 				}
 			}
 		default:
-			fmt.Printf("%s is no valid Audio command\n", hotkey)
+			fmt.Printf("Device-Type %s is unkown\n", device)
 		}
 	case strings.HasPrefix(hotkey, "Keypress:"):
 		val := strings.TrimSpace(strings.TrimPrefix(hotkey, "Keypress:"))
