@@ -18,6 +18,8 @@ Give your midicontroller the ability to:
   - increase/decrease/set volume of your input/output devices or even specific applications
 
 ## Roadmap
+- implement support for knobs and sliders
+- fix fyne preferences
 - export / import Key Mapping
 - add Windows Audio Control
 - add MacOS Audio Control
