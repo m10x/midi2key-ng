@@ -6,7 +6,16 @@
 
 ## About
 
-Map Midikeys to Hotkeys. With GUI. Crossplatform for Linux, Windows and MacOS. (Audio Control is currently only available for Linux!).
+Map Keys, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Crossplatform for Linux, Windows and MacOS.
+
+## Features
+Give your midicontroller the ability to:
+- emulate key presses or combos
+- write text
+- run console commands
+- control your audio (currently only for linux)
+  - mute/unmute/toggle your input/output devices or even specific applications
+  - increase/decrease/set volume of your input/output devices or even specific applications
 
 ## Roadmap
 - export / import Key Mapping
