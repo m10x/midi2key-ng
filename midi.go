@@ -81,7 +81,7 @@ func getOneInput(device string) string {
 			m.Unlock()
 		case msg.GetControlChange(&ch, &cc, &val):
 			m.Lock()
-			returnVal = "K" + strconv.Itoa(int(cc))
+			returnVal = "K" + strconv.Itoa(int(cc)) // use cc instead of key as identifier
 			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
 
 			/* not needed as this doesn't effect the lightning of the control
@@ -95,7 +95,7 @@ func getOneInput(device string) string {
 			m.Unlock()
 		case msg.GetPitchBend(&ch, &rel, &abs):
 			m.Lock()
-			returnVal = "S" + strconv.Itoa(int(cc))
+			returnVal = "S" + strconv.Itoa(int(ch)) // use ch instead of key as identifier
 			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
 
 			/* Not needed as slider has no lightning
@@ -341,10 +341,10 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			}
 		case msg.GetNoteEnd(&ch, &key):
 			//log.Printf("ending note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
-		case msg.GetControlChange(&ch, &cc, &val): // use cc instead of key as reference
+		case msg.GetControlChange(&ch, &cc, &val):
 			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
-			selectCell(key)
-			msg = doHotkey(ch, cc, MIDI_KNOB)
+			selectCell(cc)                    // use cc instead of key as reference
+			msg = doHotkey(ch, cc, MIDI_KNOB) // use cc instead of key as reference
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
@@ -353,6 +353,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			}
 		case msg.GetPitchBend(&ch, &rel, &abs):
 			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
+			selectCell(ch)                      // use ch instead of key as reference
 			msg = doHotkey(ch, ch, MIDI_SLIDER) // use ch instead of key as reference
 			if msg != nil {
 				err := send(msg)

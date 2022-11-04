@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	VERSION_TOOL = "pre 1"
+	VERSION_TOOL = "pre v1.0"
 	VERSION_PREF = 1
 )
 
@@ -103,7 +103,7 @@ func getMapToggle() map[uint8]string {
 
 func selectCell(pressedKey uint8) {
 	for i, x := range data {
-		if x[0] == strconv.Itoa(int((pressedKey))) {
+		if x[0][1:] == strconv.Itoa(int((pressedKey))) {
 			table.Select(widget.TableCellID{
 				Row: i,
 				Col: 0})
