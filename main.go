@@ -162,14 +162,15 @@ func stringToData(str string) {
 }
 
 func setPreferences() {
+	log.Println("saving preferences")
 	a.Preferences().SetInt("version", versionPref)
 	a.Preferences().SetString("device", comboSelect.Selected)
 	a.Preferences().SetString("data", dataToString())
 }
 
 func getPreferences() {
-	prefVersion := a.Preferences().IntWithFallback("version", 1)
-	if prefVersion == 1 {
+	prefVersion := a.Preferences().IntWithFallback("version", 0)
+	if prefVersion == 0 {
 		log.Println("No Preferences found")
 		return
 	} else if prefVersion != versionPref {
@@ -191,7 +192,7 @@ func getPreferences() {
 func main() {
 	a = app.NewWithID("de.m10x.midi2key-ng")
 	w := a.NewWindow("midi2key-ng")
-	w.Resize(fyne.NewSize(665, 400))
+	w.Resize(fyne.NewSize(1000, 400))
 
 	mapKeys = make(map[string]keyStruct)
 
@@ -199,6 +200,7 @@ func main() {
 
 	comboSelect = widget.NewSelect([]string{""}, func(value string) {
 		log.Println("Selected midi device " + value)
+		setPreferences()
 		if comboSelect.Selected != strNoDevice {
 			btnListen.Enable()
 		} else {
@@ -231,8 +233,8 @@ func main() {
 	}
 
 	table.SetColumnWidth(0, 39)
-	table.SetColumnWidth(1, 240)
-	table.SetColumnWidth(2, 240)
+	table.SetColumnWidth(1, 480)
+	table.SetColumnWidth(2, 335)
 	table.SetColumnWidth(3, 70)
 	table.SetColumnWidth(4, 60)
 
