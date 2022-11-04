@@ -202,7 +202,6 @@ func main() {
 
 	comboSelect = widget.NewSelect([]string{""}, func(value string) {
 		log.Println("Selected midi device " + value)
-		setPreferences()
 		if comboSelect.Selected != strNoDevice {
 			btnListen.Enable()
 		} else {
