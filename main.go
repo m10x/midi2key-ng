@@ -13,9 +13,11 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const VERSION_TOOL = "pre 1"
+const VERSION_PREF = 1
+
 var header = []string{"key", "hotkey", "description", "velocity", "toggle"}
 var data = [][]string{header}
-var versionPref = 1
 var mapKeys map[string]keyStruct
 
 var strNoDevice = "No Device Found"
@@ -163,7 +165,7 @@ func stringToData(str string) {
 
 func setPreferences() {
 	log.Println("saving preferences")
-	a.Preferences().SetInt("version", versionPref)
+	a.Preferences().SetInt("version", VERSION_PREF)
 	a.Preferences().SetString("device", comboSelect.Selected)
 	a.Preferences().SetString("data", dataToString())
 }
@@ -173,7 +175,7 @@ func getPreferences() {
 	if prefVersion == 0 {
 		log.Println("No Preferences found")
 		return
-	} else if prefVersion != versionPref {
+	} else if prefVersion != VERSION_PREF {
 		log.Println("Incompatible Preferences Version")
 		return
 	}
@@ -191,7 +193,7 @@ func getPreferences() {
 
 func main() {
 	a = app.NewWithID("de.m10x.midi2key-ng")
-	w := a.NewWindow("midi2key-ng")
+	w := a.NewWindow("midi2key-ng " + VERSION_TOOL)
 	w.Resize(fyne.NewSize(1000, 400))
 
 	mapKeys = make(map[string]keyStruct)
@@ -369,7 +371,7 @@ func main() {
 	var ok bool
 	if desk, ok = a.(desktop.App); ok {
 		menuItemListen = fyne.NewMenuItem(strStartListen, listen)
-		menuTray = fyne.NewMenu("midi2key-ng",
+		menuTray = fyne.NewMenu("midi2key-ng "+VERSION_TOOL,
 			fyne.NewMenuItem("Show", func() {
 				w.Show()
 			}), menuItemListen)

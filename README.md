@@ -20,6 +20,8 @@ Give your midicontroller the ability to:
 ## Roadmap
 - implement support for knobs and sliders
 - export / import Key Mapping
+- add info button to systray
+- add optional textbox with log output
 - improve design, layout etc.
 - add Windows Audio Control
 - add MacOS Audio Control
