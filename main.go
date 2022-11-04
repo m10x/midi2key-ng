@@ -59,7 +59,7 @@ func getMapHotkeys() map[uint8]string {
 	m := make(map[uint8]string)
 
 	for i := 1; i < len(data); i++ {
-		key, err := strconv.Atoi(data[i][0])
+		key, err := strconv.Atoi(data[i][0][1:]) // first char is midiType
 		if err != nil {
 			log.Printf("ERROR getMapHotkeys: %s\n", err)
 		}
@@ -73,7 +73,7 @@ func getMapVelocity() map[uint8]uint8 {
 	m := make(map[uint8]uint8)
 
 	for i := 1; i < len(data); i++ {
-		key, err := strconv.Atoi(data[i][0])
+		key, err := strconv.Atoi(data[i][0][1:]) // first char is midiType
 		if err != nil {
 			log.Printf("ERROR getMapVelocity: %s\n", err)
 		}
@@ -91,7 +91,7 @@ func getMapToggle() map[uint8]string {
 	m := make(map[uint8]string)
 
 	for i := 1; i < len(data); i++ {
-		key, err := strconv.Atoi(data[i][0])
+		key, err := strconv.Atoi(data[i][0][1:]) // first char is midiType
 		if err != nil {
 			log.Printf("ERROR getMapToogle: %s\n", err)
 		}

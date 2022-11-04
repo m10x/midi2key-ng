@@ -32,7 +32,7 @@ var (
 )
 
 type keyStruct struct {
-	midiType      int
+	midiType      int // unnötig, kann entfernt werden...
 	key           string
 	hotkeyPayload string
 	velocity      string
@@ -139,7 +139,7 @@ func getOneInput(device string) string {
 	}
 }
 
-func doHotkey(ch uint8, key uint8) midi.Message {
+func doHotkey(ch uint8, key uint8, midiType int) midi.Message {
 	var ok bool
 	var vel, curVel uint8
 	var hotkey string
@@ -155,6 +155,9 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 		log.Printf("DoHotkey: Key %v isn't assigned to a Current Velocity\n", key)
 		return nil
 	}
+
+	log.Println(mapHotkeys)
+	log.Println("KEy", key)
 
 	switch {
 	case strings.HasPrefix(hotkey, "Audio:"):
@@ -254,7 +257,9 @@ func doHotkey(ch uint8, key uint8) midi.Message {
 		}
 	}
 	mapCurrentVelocity[key] = vel
-	msg = midi.NoteOn(ch, key, vel)
+	if midiType == MIDI_BUTTON { // Others arent supported yet
+		msg = midi.NoteOn(ch, key, vel)
+	}
 
 	return msg
 }
@@ -315,7 +320,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 		case msg.GetNoteStart(&ch, &key, &vel):
 			log.Printf("starting note %s (int: %v) on channel %v with velocity %v\n", midi.Note(key), key, ch, vel)
 			selectCell(key)
-			msg = doHotkey(ch, key)
+			msg = doHotkey(ch, key, MIDI_BUTTON)
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
@@ -336,24 +341,25 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			}
 		case msg.GetNoteEnd(&ch, &key):
 			//log.Printf("ending note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
-		case msg.GetControlChange(&ch, &cc, &val):
+		case msg.GetControlChange(&ch, &cc, &val): // use cc instead of key as reference
 			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
-			/* not needed as this doesn't effect the lightning of the control
-			msg = midi.NoteOn(ch, cc, 60)
-			err := send(msg)
-			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
-				log.Printf("ERROR send: %s\n", err)
+			selectCell(key)
+			msg = doHotkey(ch, cc, MIDI_KNOB)
+			if msg != nil {
+				err := send(msg)
+				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
+					log.Printf("ERROR send: %s\n", err)
+				}
 			}
-			*/
 		case msg.GetPitchBend(&ch, &rel, &abs):
 			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
-			/* Not needed as slider has no lightning
-			msg = midi.Pitchbend(ch, rel)
-			err := send(msg)
-			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
-				log.Printf("ERROR send: %s\n", err)
+			msg = doHotkey(ch, ch, MIDI_SLIDER) // use ch instead of key as reference
+			if msg != nil {
+				err := send(msg)
+				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
+					log.Printf("ERROR send: %s\n", err)
+				}
 			}
-			*/
 		default:
 			log.Printf("received unsupported %s\n", msg)
 		}

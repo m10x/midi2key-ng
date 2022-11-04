@@ -6,7 +6,7 @@
 
 ## About
 
-Map Keys, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Crossplatform for Linux, Windows and MacOS.
+Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Crossplatform for Linux, Windows and MacOS.
 
 ## Features
 Give your midicontroller the ability to:
@@ -18,7 +18,8 @@ Give your midicontroller the ability to:
   - increase/decrease/set volume of your input/output devices or even specific applications
 
 ## Roadmap
-- implement support for knobs and sliders
+- improve handling of knobs and sliders (turning left/sliding down = decrease, turning right/sliding up = increase)
+- code cleanup
 - export / import Key Mapping
 - add info button to systray
 - add optional textbox with log output
