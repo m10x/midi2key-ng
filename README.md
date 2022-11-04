@@ -27,11 +27,16 @@ New Assignment
 Edit an Assignment
 ![image](https://user-images.githubusercontent.com/4344935/199975097-e79b21e4-bd12-433b-9003-53939384a237.png)
 
-
+## How to Install
+The repository can be fetched and installed using Go.  
+`go install -v github.com/m10x/midi2key-ng@latest`  
+  
+TODO: Release Precompiled Binaries
 
 ## Roadmap
 - improve handling of knobs and sliders (turning left/sliding down = decrease, turning right/sliding up = increase)
 - code cleanup
+- release precompiled binaries
 - export / import Key Mapping
 - add info button to systray
 - add optional textbox with log output
