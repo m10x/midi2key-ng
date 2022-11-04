@@ -15,16 +15,24 @@ import (
 	//_ "gitlab.com/gomidi/midi/v2/drivers/portmididrv" // autoregisters driver
 )
 
-var stop func() = nil
-var out drivers.Out
-var mapHotkeys map[uint8]string
-var mapVelocity map[uint8]uint8
-var mapCurrentVelocity map[uint8]uint8
-var mapToggle map[uint8]string
+const (
+	MIDI_BUTTON = 0
+	MIDI_KNOB   = 1
+	MIDI_SLIDER = 2
+)
 
-var errMidiInAlsa = "message queue limit reached"
+var (
+	errMidiInAlsa             = "message queue limit reached"
+	stop               func() = nil
+	out                drivers.Out
+	mapHotkeys         map[uint8]string
+	mapVelocity        map[uint8]uint8
+	mapCurrentVelocity map[uint8]uint8
+	mapToggle          map[uint8]string
+)
 
 type keyStruct struct {
+	midiType      int
 	key           string
 	hotkeyPayload string
 	velocity      string
@@ -60,15 +68,46 @@ func getOneInput(device string) string {
 
 	stop, err = midi.ListenTo(in, func(msg midi.Message, timestampms int32) {
 		var bt []byte
-		var ch, key, vel uint8
+		var ch, key, vel, cc, val uint8
+		var rel int16
+		var abs uint16
 		switch {
 		case msg.GetSysEx(&bt):
 			log.Printf("got sysex: % X\n", bt)
 		case msg.GetNoteStart(&ch, &key, &vel), msg.GetNoteOn(&ch, &key, &vel):
 			m.Lock()
-			returnVal = strconv.Itoa(int(key))
-			log.Println(returnVal)
+			returnVal = "B" + strconv.Itoa(int(key))
+			log.Printf("starting note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
 			m.Unlock()
+		case msg.GetControlChange(&ch, &cc, &val):
+			m.Lock()
+			returnVal = "K" + strconv.Itoa(int(cc))
+			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
+
+			/* not needed as this doesn't effect the lightning of the control
+			msg = midi.NoteOn(ch, cc, 60)
+			err := send(msg)
+			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
+				log.Printf("ERROR send: %s\n", err)
+			}
+			*/
+
+			m.Unlock()
+		case msg.GetPitchBend(&ch, &rel, &abs):
+			m.Lock()
+			returnVal = "S" + strconv.Itoa(int(cc))
+			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
+
+			/* Not needed as slider has no lightning
+			msg = midi.Pitchbend(ch, rel)
+			err := send(msg)
+			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
+				log.Printf("ERROR send: %s\n", err)
+			}
+			*/
+
+			m.Unlock()
+
 		default:
 			log.Printf("received unsupported %s\n", msg)
 			m.Lock()

@@ -13,33 +13,38 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-const VERSION_TOOL = "pre 1"
-const VERSION_PREF = 1
+const (
+	VERSION_TOOL = "pre 1"
+	VERSION_PREF = 1
+)
 
-var header = []string{"key", "hotkey", "description", "velocity", "toggle"}
-var data = [][]string{header}
-var mapKeys map[string]keyStruct
+var (
+	strNoDevice                = "No Device Found"
+	strStartListen             = "Start Listen"
+	strStopListen              = "Stop Listen"
+	preferencesLimitatorFirst  = "€m10x.de€"
+	preferencesLimitatorSecond = "$m10x.de$"
 
-var strNoDevice = "No Device Found"
-var strStartListen = "Start Listen"
-var strStopListen = "Stop Listen"
-var preferencesLimitatorFirst = "€m10x.de€"
-var preferencesLimitatorSecond = "$m10x.de$"
-var comboSelect *widget.Select
-var comboHotkey *widget.Select
-var btnListen *widget.Button
-var btnNote *widget.Button
-var btnAddRow *widget.Button
-var btnDeleteRow *widget.Button
-var btnEditRow *widget.Button
-var selectedCell widget.TableCellID
-var popupHotkey *widget.PopUp
-var table *widget.Table
-var menuItemListen *fyne.MenuItem
-var btnRefresh *widget.Button
-var menuTray *fyne.Menu
-var desk desktop.App
-var a fyne.App
+	header  = []string{"key", "hotkey", "description", "velocity", "toggle"}
+	data    = [][]string{header}
+	mapKeys map[string]keyStruct
+
+	comboSelect    *widget.Select
+	comboHotkey    *widget.Select
+	btnListen      *widget.Button
+	btnNote        *widget.Button
+	btnAddRow      *widget.Button
+	btnDeleteRow   *widget.Button
+	btnEditRow     *widget.Button
+	selectedCell   widget.TableCellID
+	popupHotkey    *widget.PopUp
+	table          *widget.Table
+	menuItemListen *fyne.MenuItem
+	btnRefresh     *widget.Button
+	menuTray       *fyne.Menu
+	desk           desktop.App
+	a              fyne.App
+)
 
 func refreshDevices() {
 	devices := getInputPorts()
@@ -319,8 +324,19 @@ func main() {
 		btnSave := widget.NewButton("Save", func() {
 			delete(mapKeys, data[selectedCell.Row][0]) // delete old entry from map dictionary. (just in case that the key was changed)
 
+			var midiType int
+			switch btnNote.Text[:1] {
+			case "B":
+				midiType = MIDI_BUTTON
+			case "K":
+				midiType = MIDI_KNOB
+			case "S":
+				midiType = MIDI_SLIDER
+			}
+
 			if comboHotkey.SelectedIndex() > -1 { // only add hotkey if a hotkeytype was selected
 				mapKeys[btnNote.Text] = keyStruct{
+					midiType:      midiType,
 					key:           btnNote.Text,
 					hotkeyPayload: entryHotkey.Text,
 					velocity:      entryVelocity.Text,

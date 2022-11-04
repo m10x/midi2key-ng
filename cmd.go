@@ -7,9 +7,11 @@ import (
 	"strings"
 )
 
-const SINK = 0
-const SOURCE = 1
-const SINK_INPUT = 2
+const (
+	DEV_SINK       = 0
+	DEV_SOURCE     = 1
+	DEV_SINK_INPUT = 2
+)
 
 type applicationSinkStruct struct {
 	index       string // Sink Input #
@@ -17,7 +19,7 @@ type applicationSinkStruct struct {
 	description string // sinkinput: application.name, sink: Description
 	mute        bool   // Mute
 	volume      int    // Volume (in %)
-	typ         int    // Sink, Source or Sinkinput?
+	devType     int    // Sink, Source or Sinkinput? Ist das nötig? Hole es aktuell aus dem String
 }
 
 // https://stackoverflow.com/a/20438245
@@ -60,7 +62,7 @@ func getSinks() []applicationSinkStruct {
 		} else {
 			log.Println("Error in getSinks, while converting Volume String to int: " + err.Error())
 		}
-		addApp.typ = SINK
+		addApp.devType = DEV_SINK
 
 		apps = append(apps, addApp)
 	}
@@ -92,7 +94,7 @@ func getSources() []applicationSinkStruct {
 		} else {
 			log.Println("Error in getSources, while converting Volume String to int: " + err.Error())
 		}
-		addApp.typ = SOURCE
+		addApp.devType = DEV_SOURCE
 
 		apps = append(apps, addApp)
 	}
@@ -124,7 +126,7 @@ func getSinkInputs() []applicationSinkStruct {
 		} else {
 			log.Println("Error in getSinkInputs, while converting Volume String to int: " + err.Error())
 		}
-		addApp.typ = SINK_INPUT
+		addApp.devType = DEV_SINK_INPUT
 
 		apps = append(apps, addApp)
 	}
