@@ -41,6 +41,8 @@ TODO: Release Precompiled Binaries
 - add info button to systray
 - add optional textbox with log output
 - improve design, layout etc.
+- test on different vms
+- test other midi controllers
 - add Windows Audio Control
 - add MacOS Audio Control
 
