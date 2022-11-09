@@ -1,4 +1,4 @@
-package main
+package pkgMidi
 
 import (
 	"log"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-vgo/robotgo"
+	"github.com/m10x/midi2key-ng/pkg/pkgCmd"
 	"gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
 
@@ -31,15 +32,15 @@ var (
 	mapToggle          map[uint8]string
 )
 
-type keyStruct struct {
-	midiType      int // unnötig, kann entfernt werden...
-	key           string
-	hotkeyPayload string
-	velocity      string
-	toggle        bool
+type KeyStruct struct {
+	MidiType      int // unnötig, kann entfernt werden...
+	Key           string
+	HotkeyPayload string
+	Velocity      string
+	Toggle        bool
 }
 
-func getInputPorts() []string {
+func GetInputPorts() []string {
 	var ports []string
 
 	log.Println(midi.GetInPorts().String())
@@ -54,7 +55,7 @@ func getInputPorts() []string {
 	return ports
 }
 
-func getOneInput(device string) string {
+func GetOneInput(device string) string {
 	// prepare to listen ---------
 	inPort := device
 	in, err := midi.FindInPort(inPort)
@@ -167,54 +168,54 @@ func doHotkey(ch uint8, key uint8, midiType int) midi.Message {
 		action := strings.TrimSpace(hotkeyArr[2])
 		switch {
 		case strings.HasPrefix(device, "In:"):
-			for _, x := range getSources() {
-				if x.description == device {
+			for _, x := range pkgCmd.GetSources() {
+				if x.Description == device {
 					switch {
 					case action == "(Un)Mute":
-						exeCmd("pactl set-source-mute " + x.name + " toggle")
+						pkgCmd.ExeCmd("pactl set-source-mute " + x.Name + " toggle")
 					case strings.Contains(action, "+"), strings.Contains(action, "-"):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
-						exeCmd("pactl set-source-volume " + x.name + " " + actionTrimmed)
+						pkgCmd.ExeCmd("pactl set-source-volume " + x.Name + " " + actionTrimmed)
 					case strings.Contains(action, "="):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
 						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
-						exeCmd("pactl set-source-volume " + x.name + " " + actionTrimmed)
+						pkgCmd.ExeCmd("pactl set-source-volume " + x.Name + " " + actionTrimmed)
 					default:
 						log.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
 					}
 				}
 			}
 		case strings.HasPrefix(device, "Out:"):
-			for _, x := range getSinks() {
-				if x.description == device {
+			for _, x := range pkgCmd.GetSinks() {
+				if x.Description == device {
 					switch {
 					case action == "(Un)Mute":
-						exeCmd("pactl set-sink-mute " + x.name + " toggle")
+						pkgCmd.ExeCmd("pactl set-sink-mute " + x.Name + " toggle")
 					case strings.Contains(action, "+"), strings.Contains(action, "-"):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
-						exeCmd("pactl set-sink-volume " + x.name + " " + actionTrimmed)
+						pkgCmd.ExeCmd("pactl set-sink-volume " + x.Name + " " + actionTrimmed)
 					case strings.Contains(action, "="):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
 						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
-						exeCmd("pactl set-sink-volume " + x.name + " " + actionTrimmed)
+						pkgCmd.ExeCmd("pactl set-sink-volume " + x.Name + " " + actionTrimmed)
 					default:
 						log.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
 					}
 				}
 			}
 		case strings.HasPrefix(device, "App:"):
-			for _, x := range getSinkInputs() {
-				if x.description == device {
+			for _, x := range pkgCmd.GetSinkInputs() {
+				if x.Description == device {
 					switch {
 					case action == "(Un)Mute":
-						exeCmd("pactl set-sink-input-mute " + x.index + " toggle")
+						pkgCmd.ExeCmd("pactl set-sink-input-mute " + x.Index + " toggle")
 					case strings.Contains(action, "+"), strings.Contains(action, "-"):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
-						exeCmd("pactl set-sink-input-volume " + x.index + " " + actionTrimmed)
+						pkgCmd.ExeCmd("pactl set-sink-input-volume " + x.Index + " " + actionTrimmed)
 					case strings.Contains(action, "="):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
 						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
-						exeCmd("pactl set-sink-input-volume " + x.index + " " + actionTrimmed)
+						pkgCmd.ExeCmd("pactl set-sink-input-volume " + x.Index + " " + actionTrimmed)
 					default:
 						log.Printf("Audio action %s is unknown (%s)\n", action, hotkeyArr)
 					}
@@ -239,7 +240,7 @@ func doHotkey(ch uint8, key uint8, midiType int) midi.Message {
 		val := strings.TrimSpace(strings.TrimPrefix(hotkey, "Write:"))
 		robotgo.TypeStr(val)
 	default:
-		stdout, err := exeCmd(hotkey)
+		stdout, err := pkgCmd.ExeCmd(hotkey)
 
 		if err != nil {
 			log.Println("Error cmd.Output" + err.Error())
@@ -264,7 +265,7 @@ func doHotkey(ch uint8, key uint8, midiType int) midi.Message {
 	return msg
 }
 
-func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity map[uint8]uint8, newMapToogle map[uint8]string) string {
+func StartListen(device string, newMapHotkeys map[uint8]string, newMapVelocity map[uint8]uint8, newMapToogle map[uint8]string) string {
 	mapHotkeys = newMapHotkeys
 	mapVelocity = newMapVelocity
 	mapToggle = newMapToogle
@@ -319,7 +320,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			log.Printf("got sysex: % X\n", bt)
 		case msg.GetNoteStart(&ch, &key, &vel):
 			log.Printf("starting note %s (int: %v) on channel %v with velocity %v\n", midi.Note(key), key, ch, vel)
-			selectCell(key)
+			//pkgGui.SelectCell(key)
 			msg = doHotkey(ch, key, MIDI_BUTTON)
 			if msg != nil {
 				err := send(msg)
@@ -343,7 +344,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			//log.Printf("ending note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
 		case msg.GetControlChange(&ch, &cc, &val):
 			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
-			selectCell(cc)                    // use cc instead of key as reference
+			//pkgGui.SelectCell(cc)             // use cc instead of key as reference
 			msg = doHotkey(ch, cc, MIDI_KNOB) // use cc instead of key as reference
 			if msg != nil {
 				err := send(msg)
@@ -353,7 +354,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			}
 		case msg.GetPitchBend(&ch, &rel, &abs):
 			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
-			selectCell(ch)                      // use ch instead of key as reference
+			//pkgGui.SelectCell(ch)               // use ch instead of key as reference
 			msg = doHotkey(ch, ch, MIDI_SLIDER) // use ch instead of key as reference
 			if msg != nil {
 				err := send(msg)
@@ -374,7 +375,7 @@ func startListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 	return ""
 }
 
-func stopListen() string {
+func StopListen() string {
 	if out != nil {
 		out.Close()
 	} else {
