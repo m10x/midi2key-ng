@@ -168,7 +168,7 @@ func Startup(versionTool string, versionPref int) {
 		lblVelocity := widget.NewLabel("Velocity:")
 		entryVelocity := widget.NewEntry()
 		lblToggle := widget.NewLabel("Toggle:")
-		checkToggle := widget.NewCheck("Toogle LED", nil)
+		checkToggle := widget.NewCheck("Toggle LED", nil)
 
 		btnSave := widget.NewButton("Save", func() {
 			delete(mapKeys, data[selectedCell.Row][0]) // delete old entry from map dictionary. (just in case that the key was changed)
