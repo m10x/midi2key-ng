@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"fyne.io/fyne/v2/widget"
 	"github.com/go-vgo/robotgo"
 	"github.com/m10x/midi2key-ng/pkg/pkgCmd"
 	"gitlab.com/gomidi/midi/v2"
@@ -265,7 +266,19 @@ func doHotkey(ch uint8, key uint8, midiType int) midi.Message {
 	return msg
 }
 
-func StartListen(device string, newMapHotkeys map[uint8]string, newMapVelocity map[uint8]uint8, newMapToogle map[uint8]string) string {
+func selectCell(table *widget.Table, data [][]string, pressedKey uint8) {
+	for i, x := range data {
+		if x[0][1:] == strconv.Itoa(int((pressedKey))) {
+			log.Println("found!\n\n")
+			table.Select(widget.TableCellID{
+				Row: i,
+				Col: 0})
+			break
+		}
+	}
+}
+
+func StartListen(table *widget.Table, data [][]string, device string, newMapHotkeys map[uint8]string, newMapVelocity map[uint8]uint8, newMapToogle map[uint8]string) string {
 	mapHotkeys = newMapHotkeys
 	mapVelocity = newMapVelocity
 	mapToggle = newMapToogle
@@ -320,7 +333,7 @@ func StartListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			log.Printf("got sysex: % X\n", bt)
 		case msg.GetNoteStart(&ch, &key, &vel):
 			log.Printf("starting note %s (int: %v) on channel %v with velocity %v\n", midi.Note(key), key, ch, vel)
-			//pkgGui.SelectCell(key)
+			selectCell(table, data, key)
 			msg = doHotkey(ch, key, MIDI_BUTTON)
 			if msg != nil {
 				err := send(msg)
@@ -344,7 +357,7 @@ func StartListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			//log.Printf("ending note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
 		case msg.GetControlChange(&ch, &cc, &val):
 			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
-			//pkgGui.SelectCell(cc)             // use cc instead of key as reference
+			selectCell(table, data, cc)       // use cc instead of key as reference
 			msg = doHotkey(ch, cc, MIDI_KNOB) // use cc instead of key as reference
 			if msg != nil {
 				err := send(msg)
@@ -354,7 +367,7 @@ func StartListen(device string, newMapHotkeys map[uint8]string, newMapVelocity m
 			}
 		case msg.GetPitchBend(&ch, &rel, &abs):
 			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
-			//pkgGui.SelectCell(ch)               // use ch instead of key as reference
+			selectCell(table, data, ch)         // use ch instead of key as reference
 			msg = doHotkey(ch, ch, MIDI_SLIDER) // use ch instead of key as reference
 			if msg != nil {
 				err := send(msg)

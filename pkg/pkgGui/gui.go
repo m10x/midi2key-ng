@@ -303,22 +303,9 @@ func getMapToggle() map[uint8]string {
 	return m
 }
 
-func SelectCell(pressedKey uint8) {
-	for i, x := range data {
-		if x[0][1:] == strconv.Itoa(int((pressedKey))) {
-			table.Select(widget.TableCellID{
-				Row: i,
-				Col: 0})
-			break
-		}
-
-	}
-
-}
-
 func listen() {
 	if btnListen.Text == strStartListen {
-		pkgMidi.StartListen(comboSelect.Selected, getMapHotkeys(), getMapVelocity(), getMapToggle())
+		pkgMidi.StartListen(table, data, comboSelect.Selected, getMapHotkeys(), getMapVelocity(), getMapToggle())
 		btnListen.Text = strStopListen
 		btnListen.Refresh()
 		menuItemListen.Label = strStopListen
