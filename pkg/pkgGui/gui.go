@@ -3,7 +3,6 @@ package pkgGui
 import (
 	"log"
 	"strconv"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -14,19 +13,24 @@ import (
 
 	"github.com/m10x/midi2key-ng/pkg/pkgCmd"
 	"github.com/m10x/midi2key-ng/pkg/pkgMidi"
-	"github.com/m10x/midi2key-ng/pkg/pkgResources"
+)
+
+const (
+	COLUMN_KEY         = 0
+	COLUMN_PAYLOAD     = 1
+	COLUMN_DESCRIPTION = 2
+	COLUMN_VELOCITY    = 3
+	COLUMN_TOGGLE      = 4
 )
 
 var (
-	strNoDevice                = "No Device Found"
-	strStartListen             = "Start Listen"
-	strStopListen              = "Stop Listen"
-	preferencesLimitatorFirst  = "€m10x.de€"
-	preferencesLimitatorSecond = "$m10x.de$"
+	strNoDevice    = "No Device Found"
+	strStartListen = "Start Listen"
+	strStopListen  = "Stop Listen"
 
-	header  = []string{"key", "hotkey", "description", "velocity", "toggle"}
+	header  = []string{"key", "payload", "description", "velocity", "toggle"}
 	data    = [][]string{header}
-	mapKeys map[string]pkgMidi.KeyStruct
+	mapKeys map[uint8]pkgMidi.KeyStruct
 
 	comboSelect    *widget.Select
 	comboHotkey    *widget.Select
@@ -50,7 +54,7 @@ func Startup(versionTool string, versionPref int) {
 	w := a.NewWindow("midi2key-ng " + versionTool)
 	w.Resize(fyne.NewSize(1000, 400))
 
-	mapKeys = make(map[string]pkgMidi.KeyStruct)
+	mapKeys = make(map[uint8]pkgMidi.KeyStruct)
 
 	hello := widget.NewLabel("Hello! :)")
 
@@ -105,7 +109,11 @@ func Startup(versionTool string, versionPref int) {
 				tmpData = append(tmpData, x)
 			}
 		}
-		delete(mapKeys, data[selectedCell.Row][0]) // delete key of selected row from the key dictionary
+		keyId, err := strconv.Atoi(data[selectedCell.Row][0])
+		if err != nil {
+			log.Printf("Startup: Error formatting %s (string) to uint8\n", data[selectedCell.Row][0])
+		}
+		delete(mapKeys, uint8(keyId)) // delete key of selected row from the key dictionary
 		data = tmpData
 		table.Refresh()
 		setPreferences(versionPref)
@@ -171,40 +179,26 @@ func Startup(versionTool string, versionPref int) {
 		checkToggle := widget.NewCheck("Toggle LED", nil)
 
 		btnSave := widget.NewButton("Save", func() {
-			delete(mapKeys, data[selectedCell.Row][0]) // delete old entry from map dictionary. (just in case that the key was changed)
-
-			var midiType int
-			switch btnNote.Text[:1] {
-			case "B":
-				midiType = pkgMidi.MIDI_BUTTON
-			case "K":
-				midiType = pkgMidi.MIDI_KNOB
-			case "S":
-				midiType = pkgMidi.MIDI_SLIDER
+			keyId, err := strconv.Atoi(data[selectedCell.Row][0])
+			if err != nil {
+				log.Printf("Startup: Error formatting %s (string) to uint8\n", data[selectedCell.Row][0])
 			}
+			delete(mapKeys, uint8(keyId)) // delete old entry from map dictionary. (just in case that the key was changed)
 
 			if comboHotkey.SelectedIndex() > -1 { // only add hotkey if a hotkeytype was selected
-				mapKeys[btnNote.Text] = pkgMidi.KeyStruct{
-					MidiType:      midiType,
-					Key:           btnNote.Text,
-					HotkeyPayload: entryHotkey.Text,
-					Velocity:      entryVelocity.Text,
-					Toggle:        checkToggle.Checked,
+				data[rowToEdit][0] = btnNote.Text
+				data[rowToEdit][1] = entryHotkey.Text
+				data[rowToEdit][2] = entryDescription.Text
+				data[rowToEdit][3] = entryVelocity.Text
+				if checkToggle.Checked {
+					data[rowToEdit][4] = "true"
+				} else {
+					data[rowToEdit][4] = "false"
 				}
+				table.Refresh()
+				setPreferences(versionPref)
 			}
-
-			data[rowToEdit][0] = btnNote.Text
-			data[rowToEdit][1] = entryHotkey.Text
-			data[rowToEdit][2] = entryDescription.Text
-			data[rowToEdit][3] = entryVelocity.Text
-			if checkToggle.Checked {
-				data[rowToEdit][4] = "true"
-			} else {
-				data[rowToEdit][4] = "false"
-			}
-			table.Refresh()
 			popupEdit.Hide()
-			setPreferences(versionPref)
 		})
 		btnCancel := widget.NewButton("Cancel", func() {
 			popupEdit.Hide()
@@ -240,7 +234,7 @@ func Startup(versionTool string, versionPref int) {
 				w.Show()
 			}), menuItemListen)
 		desk.SetSystemTrayMenu(menuTray)
-		desk.SetSystemTrayIcon(pkgResources.ResourceMidiOffPng)
+		desk.SetSystemTrayIcon(resourceMidiOffPng)
 	}
 
 	getPreferences(versionPref)
@@ -257,60 +251,47 @@ func refreshDevices() {
 	comboSelect.SetSelectedIndex(0)
 }
 
-func getMapHotkeys() map[uint8]string {
-	m := make(map[uint8]string)
-
+func fillMapKeys() {
 	for i := 1; i < len(data); i++ {
-		key, err := strconv.Atoi(data[i][0][1:]) // first char is midiType
-		if err != nil {
-			log.Printf("ERROR getMapHotkeys: %s\n", err)
+		var midiType int
+		switch data[i][COLUMN_KEY][:1] {
+		case "B":
+			midiType = pkgMidi.MIDI_BUTTON
+		case "K":
+			midiType = pkgMidi.MIDI_KNOB
+		case "S":
+			midiType = pkgMidi.MIDI_SLIDER
 		}
-		m[uint8(key)] = data[i][1]
+
+		keyId, err := strconv.Atoi(data[i][COLUMN_KEY][1:]) // first char is midiType
+		if err != nil {
+			log.Printf("ERROR fillMapKeys: %s\n", err)
+		}
+
+		vel, err := strconv.Atoi(data[i][0][1:]) // first char is midiType
+		if err != nil {
+			log.Printf("ERROR fillMapKeys: %s\n", err)
+		}
+
+		mapKeys[uint8(keyId)] = pkgMidi.KeyStruct{
+			MidiType: midiType,
+			Key:      data[i][COLUMN_KEY],
+			Payload:  data[i][COLUMN_PAYLOAD],
+			Velocity: uint8(vel),
+			Toggle:   data[i][COLUMN_TOGGLE] == "true",
+		}
 	}
-
-	return m
-}
-
-func getMapVelocity() map[uint8]uint8 {
-	m := make(map[uint8]uint8)
-
-	for i := 1; i < len(data); i++ {
-		key, err := strconv.Atoi(data[i][0][1:]) // first char is midiType
-		if err != nil {
-			log.Printf("ERROR getMapVelocity: %s\n", err)
-		}
-		velocity, err := strconv.Atoi(data[i][3])
-		if err != nil {
-			log.Printf("ERROR getMapVelocity: %s\n", err)
-		}
-		m[uint8(key)] = uint8(velocity)
-	}
-
-	return m
-}
-
-func getMapToggle() map[uint8]string {
-	m := make(map[uint8]string)
-
-	for i := 1; i < len(data); i++ {
-		key, err := strconv.Atoi(data[i][0][1:]) // first char is midiType
-		if err != nil {
-			log.Printf("ERROR getMapToogle: %s\n", err)
-		}
-		m[uint8(key)] = data[i][4]
-	}
-
-	return m
 }
 
 func listen() {
 	if btnListen.Text == strStartListen {
-		pkgMidi.StartListen(table, data, comboSelect.Selected, getMapHotkeys(), getMapVelocity(), getMapToggle())
+		fillMapKeys()
+		pkgMidi.StartListen(table, data, comboSelect.Selected, mapKeys)
 		btnListen.Text = strStopListen
 		btnListen.Refresh()
 		menuItemListen.Label = strStopListen
 		menuTray.Refresh()
-		desk.SetSystemTrayIcon(pkgResources.ResourceMidiOnPng)
+		desk.SetSystemTrayIcon(resourceMidiOnPng)
 		btnRefresh.Disable()
 		comboSelect.Disable()
 		btnAddRow.Disable()
@@ -322,65 +303,11 @@ func listen() {
 		btnListen.Refresh()
 		menuItemListen.Label = strStartListen
 		menuTray.Refresh()
-		desk.SetSystemTrayIcon(pkgResources.ResourceMidiOffPng)
+		desk.SetSystemTrayIcon(resourceMidiOffPng)
 		btnRefresh.Enable()
 		comboSelect.Enable()
 		btnAddRow.Enable()
 		btnDeleteRow.Enable()
 		btnEditRow.Enable()
 	}
-}
-
-func dataToString() string {
-	strArr := ""
-	for i, d := range data {
-		if i == 0 { // skip first row which is the header row
-			continue
-		}
-		for ii, dd := range d {
-			if ii > 0 {
-				strArr += preferencesLimitatorFirst
-			}
-			strArr += dd
-		}
-		strArr += preferencesLimitatorSecond
-	}
-	return strArr
-}
-
-func stringToData(str string) {
-	for _, d := range strings.Split(str, preferencesLimitatorSecond) {
-		dataRow := strings.Split(d, preferencesLimitatorFirst)
-		if len(dataRow) == len(data[0]) { // empty or too short dataRow will cause fyne to crash
-			data = append(data, dataRow)
-		}
-	}
-}
-
-func setPreferences(versionPref int) {
-	log.Println("saving preferences")
-	a.Preferences().SetInt("version", versionPref)
-	a.Preferences().SetString("device", comboSelect.Selected)
-	a.Preferences().SetString("data", dataToString())
-}
-
-func getPreferences(versionPref int) {
-	prefVersion := a.Preferences().IntWithFallback("version", 0)
-	if prefVersion == 0 {
-		log.Println("No Preferences found")
-		return
-	} else if prefVersion != versionPref {
-		log.Println("Incompatible Preferences Version")
-		return
-	}
-
-	deviceOptions := comboSelect.Options
-	prefDevice := a.Preferences().StringWithFallback("device", "")
-	for i := 0; i < len(deviceOptions); i++ {
-		if deviceOptions[i] == prefDevice {
-			comboSelect.SetSelectedIndex(i)
-		}
-	}
-	prefData := a.Preferences().StringWithFallback("data", "")
-	stringToData(prefData)
 }

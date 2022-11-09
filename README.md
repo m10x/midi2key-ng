@@ -35,7 +35,7 @@ TODO: Release Precompiled Binaries
 
 ## Roadmap
 - improve handling of knobs and sliders (turning left/sliding down = decrease, turning right/sliding up = increase)
-- code cleanup
+- add code comments
 - release precompiled binaries
 - export / import Key Mapping
 - add info button to systray
