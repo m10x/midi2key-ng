@@ -35,13 +35,13 @@ TODO: Release Precompiled Binaries
 
 ## Roadmap
 - improve handling of knobs and sliders (turning left/sliding down = decrease, turning right/sliding up = increase)
+- add optional textbox with log output
 - add code comments
+- test on different vms
 - release precompiled binaries
 - export / import Key Mapping
 - add info button to systray
-- add optional textbox with log output
 - improve design, layout etc.
-- test on different vms
 - test other midi controllers
 - add Windows Audio Control
 - add MacOS Audio Control
