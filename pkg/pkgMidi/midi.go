@@ -143,8 +143,13 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, midiType int) mi
 	var ok bool
 	var vel, curVel uint8
 
+	if mapKeys[key].Key == "" {
+		log.Printf("doHotkey: Key %v isn't assigned yet\n", key)
+		return nil
+	}
+
 	if curVel, ok = mapCurrentVelocity[key]; !ok {
-		log.Printf("DoHotkey: Key %v isn't assigned to a Current Velocity\n", key)
+		log.Printf("doHotkey: Key %v isn't assigned to a Current Velocity\n", key)
 		return nil
 	}
 

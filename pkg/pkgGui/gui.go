@@ -109,11 +109,6 @@ func Startup(versionTool string, versionPref int) {
 				tmpData = append(tmpData, x)
 			}
 		}
-		keyId, err := strconv.Atoi(data[selectedCell.Row][0])
-		if err != nil {
-			log.Printf("Startup: Error formatting %s (string) to uint8\n", data[selectedCell.Row][0])
-		}
-		delete(mapKeys, uint8(keyId)) // delete key of selected row from the key dictionary
 		data = tmpData
 		table.Refresh()
 		setPreferences(versionPref)
@@ -179,11 +174,6 @@ func Startup(versionTool string, versionPref int) {
 		checkToggle := widget.NewCheck("Toggle LED", nil)
 
 		btnSave := widget.NewButton("Save", func() {
-			keyId, err := strconv.Atoi(data[selectedCell.Row][0])
-			if err != nil {
-				log.Printf("Startup: Error formatting %s (string) to uint8\n", data[selectedCell.Row][0])
-			}
-			delete(mapKeys, uint8(keyId)) // delete old entry from map dictionary. (just in case that the key was changed)
 
 			if comboHotkey.SelectedIndex() > -1 { // only add hotkey if a hotkeytype was selected
 				data[rowToEdit][0] = btnNote.Text
@@ -265,12 +255,14 @@ func fillMapKeys() {
 
 		keyId, err := strconv.Atoi(data[i][COLUMN_KEY][1:]) // first char is midiType
 		if err != nil {
-			log.Printf("ERROR fillMapKeys: %s\n", err)
+			log.Printf("ERROR fillMapKeys: strconv.Atoi 1: %s\n", err)
+			continue
 		}
 
 		vel, err := strconv.Atoi(data[i][0][1:]) // first char is midiType
 		if err != nil {
-			log.Printf("ERROR fillMapKeys: %s\n", err)
+			log.Printf("ERROR fillMapKeys: strconv.Atoi 2:%s\n", err)
+			continue
 		}
 
 		mapKeys[uint8(keyId)] = pkgMidi.KeyStruct{
