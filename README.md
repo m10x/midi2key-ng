@@ -40,7 +40,7 @@ TODO: Release Precompiled Binaries
 - test on different vms
 - release precompiled binaries
 - export / import Key Mapping
-- add info button to systray
+- add info button to systray, implement hide/show, option: minimize on exit
 - improve design, layout etc.
 - test other midi controllers
 - add Windows Audio Control
