@@ -269,7 +269,6 @@ func doHotkey(ch uint8, key uint8, midiType int) midi.Message {
 func selectCell(table *widget.Table, data [][]string, pressedKey uint8) {
 	for i, x := range data {
 		if x[0][1:] == strconv.Itoa(int((pressedKey))) {
-			log.Println("found!\n\n")
 			table.Select(widget.TableCellID{
 				Row: i,
 				Col: 0})
