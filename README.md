@@ -29,7 +29,7 @@ Edit an Assignment
 
 ## How to Install
 
-### Option 1: Download precompiled binary (currenlty only Linux)
+### Option 1: Download precompiled binary (Linux, Windows, MacOS)
 Download a precompiled binary from the [latest Release](https://github.com/m10x/midi2key-ng/releases).  
 
 ### Option 2: Fetch using go (Linux, Windows, MacOS)
