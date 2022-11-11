@@ -38,6 +38,8 @@ The repository can be fetched and installed using Go.
 `go install -v github.com/m10x/midi2key-ng@latest`  
   
 ## Roadmap
+- implement soundboard functionality using [beep](https://github.com/faiface/beep)
+- add mouse emulation functionalities
 - add optional textbox with log output
 - add code comments
 - export / import Key Mapping
