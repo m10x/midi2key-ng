@@ -34,7 +34,6 @@ The repository can be fetched and installed using Go.
 TODO: Release Precompiled Binaries
 
 ## Roadmap
-- improve handling of knobs and sliders (turning left/sliding down = decrease, turning right/sliding up = increase)
 - add optional textbox with log output
 - add code comments
 - test on different vms

@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/m10x/midi2key-ng/pkg/pkgUtils"
 )
 
 const (
@@ -54,11 +56,11 @@ func GetSinks() []ApplicationSinkStruct {
 		}
 		var addApp ApplicationSinkStruct
 		addApp.Index = strings.SplitN(sink, "\n", 2)[0]
-		addApp.Name = GetStringInBetween(sink, "Name: ", "\n")
-		addApp.Description = "Out: " + GetStringInBetween(sink, "Description: ", "\n")
-		addApp.mute = GetStringInBetween(sink, "Mute: ", "\n") == "yes"
-		sinkVolumeStr := GetStringInBetween(sink, "Volume: ", "\n")
-		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
+		addApp.Name = pkgUtils.GetStringInBetween(sink, "Name: ", "\n")
+		addApp.Description = "Out: " + pkgUtils.GetStringInBetween(sink, "Description: ", "\n")
+		addApp.mute = pkgUtils.GetStringInBetween(sink, "Mute: ", "\n") == "yes"
+		sinkVolumeStr := pkgUtils.GetStringInBetween(sink, "Volume: ", "\n")
+		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(pkgUtils.GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
 			addApp.volume = sinkVolume
 		} else {
 			log.Println("Error in getSinks, while converting Volume String to int: " + err.Error())
@@ -86,11 +88,11 @@ func GetSources() []ApplicationSinkStruct {
 		}
 		var addApp ApplicationSinkStruct
 		addApp.Index = strings.SplitN(sink, "\n", 2)[0]
-		addApp.Name = GetStringInBetween(sink, "Name: ", "\n")
-		addApp.Description = "In: " + GetStringInBetween(sink, "Description: ", "\n")
-		addApp.mute = GetStringInBetween(sink, "Mute: ", "\n") == "yes"
-		sinkVolumeStr := GetStringInBetween(sink, "Volume: ", "\n")
-		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
+		addApp.Name = pkgUtils.GetStringInBetween(sink, "Name: ", "\n")
+		addApp.Description = "In: " + pkgUtils.GetStringInBetween(sink, "Description: ", "\n")
+		addApp.mute = pkgUtils.GetStringInBetween(sink, "Mute: ", "\n") == "yes"
+		sinkVolumeStr := pkgUtils.GetStringInBetween(sink, "Volume: ", "\n")
+		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(pkgUtils.GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
 			addApp.volume = sinkVolume
 		} else {
 			log.Println("Error in getSources, while converting Volume String to int: " + err.Error())
@@ -118,11 +120,11 @@ func GetSinkInputs() []ApplicationSinkStruct {
 		}
 		var addApp ApplicationSinkStruct
 		addApp.Index = strings.SplitN(sink, "\n", 2)[0]
-		addApp.Name = GetStringInBetween(sink, "application.name = \"", "\"") // Only for flatpak, not for binary: GetStringInBetween(sink, "pipewire.access.portal.app_id = \"", "\"")
-		addApp.Description = "App: " + GetStringInBetween(sink, "application.name = \"", "\"")
-		addApp.mute = GetStringInBetween(sink, "Mute: ", "\n") == "yes"
-		sinkVolumeStr := GetStringInBetween(sink, "Volume: ", "\n")
-		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
+		addApp.Name = pkgUtils.GetStringInBetween(sink, "application.name = \"", "\"") // Only for flatpak, not for binary: GetStringInBetween(sink, "pipewire.access.portal.app_id = \"", "\"")
+		addApp.Description = "App: " + pkgUtils.GetStringInBetween(sink, "application.name = \"", "\"")
+		addApp.mute = pkgUtils.GetStringInBetween(sink, "Mute: ", "\n") == "yes"
+		sinkVolumeStr := pkgUtils.GetStringInBetween(sink, "Volume: ", "\n")
+		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(pkgUtils.GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
 			addApp.volume = sinkVolume
 		} else {
 			log.Println("Error in getSinkInputs, while converting Volume String to int: " + err.Error())
@@ -133,18 +135,4 @@ func GetSinkInputs() []ApplicationSinkStruct {
 	}
 
 	return apps
-}
-
-// from https://stackoverflow.com/a/42331558
-func GetStringInBetween(str string, start string, end string) (result string) {
-	s := strings.Index(str, start)
-	if s == -1 {
-		return
-	}
-	s += len(start)
-	e := strings.Index(str[s:], end)
-	if e == -1 {
-		return
-	}
-	return str[s : s+e]
 }

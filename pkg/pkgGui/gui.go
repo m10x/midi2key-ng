@@ -20,7 +20,7 @@ const (
 	COLUMN_PAYLOAD     = 1
 	COLUMN_DESCRIPTION = 2
 	COLUMN_VELOCITY    = 3
-	COLUMN_TOGGLE      = 4
+	COLUMN_SPECIAL     = 4
 )
 
 var (
@@ -182,34 +182,32 @@ func Startup(versionTool string, versionPref int) {
 		}
 
 		btnSave := widget.NewButton("Save", func() {
+			data[rowToEdit][COLUMN_KEY] = btnNote.Text
+			data[rowToEdit][COLUMN_PAYLOAD] = entryPayload.Text
+			data[rowToEdit][COLUMN_DESCRIPTION] = entryDescription.Text
+			data[rowToEdit][COLUMN_VELOCITY] = entryVelocity.Text
+			if checkSpecial.Checked {
+				log.Println("TRUE")
+				data[rowToEdit][COLUMN_SPECIAL] = "true"
+			} else {
+				log.Println("FALSE")
 
-			if comboPayload.SelectedIndex() > -1 { // only add hotkey if a hotkeytype was selected
-				data[rowToEdit][0] = btnNote.Text
-				data[rowToEdit][1] = entryPayload.Text
-				data[rowToEdit][2] = entryDescription.Text
-				data[rowToEdit][3] = entryVelocity.Text
-				if checkSpecial.Checked {
-					data[rowToEdit][4] = "true"
-				} else {
-					data[rowToEdit][4] = "false"
-				}
-				table.Refresh()
-				setPreferences(versionPref)
+				data[rowToEdit][COLUMN_SPECIAL] = "false"
 			}
+			table.Refresh()
+			setPreferences(versionPref)
 			popupEdit.Hide()
 		})
 		btnCancel := widget.NewButton("Cancel", func() {
 			popupEdit.Hide()
 		})
 
-		btnNote.Text = data[rowToEdit][0]
+		btnNote.Text = data[rowToEdit][COLUMN_KEY]
 		configureCheckSpecial(strSpecialDisabled)
-		entryPayload.Text = data[rowToEdit][1]
-		entryDescription.Text = data[rowToEdit][2]
-		entryVelocity.Text = data[rowToEdit][3]
-		if data[rowToEdit][4] == "true" {
-			checkSpecial.Checked = true
-		}
+		entryPayload.Text = data[rowToEdit][COLUMN_PAYLOAD]
+		entryDescription.Text = data[rowToEdit][COLUMN_DESCRIPTION]
+		entryVelocity.Text = data[rowToEdit][COLUMN_VELOCITY]
+		checkSpecial.Checked = data[rowToEdit][COLUMN_SPECIAL] == "true"
 
 		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblPayload, container.NewVBox(comboPayload, entryPayload), lblDescription, entryDescription, lblVelocity, entryVelocity, lblToggle, checkSpecial), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
 		popupEdit.Resize(fyne.NewSize(400, 200))
@@ -292,7 +290,7 @@ func fillMapKeys() {
 			continue
 		}
 
-		vel, err := strconv.Atoi(data[i][0][1:]) // first char is midiType
+		vel, err := strconv.Atoi(data[i][COLUMN_VELOCITY]) // first char is midiType
 		if err != nil {
 			log.Printf("ERROR fillMapKeys: strconv.Atoi 2:%s\n", err)
 			continue
@@ -302,8 +300,8 @@ func fillMapKeys() {
 			MidiType: midiType,
 			Key:      data[i][COLUMN_KEY],
 			Payload:  data[i][COLUMN_PAYLOAD],
-			Velocity: uint8(vel),
-			Toggle:   data[i][COLUMN_TOGGLE] == "true",
+			Velocity: uint16(vel),
+			Special:  data[i][COLUMN_SPECIAL] == "true",
 		}
 	}
 }

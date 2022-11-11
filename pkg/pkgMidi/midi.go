@@ -32,8 +32,8 @@ type KeyStruct struct {
 	MidiType string
 	Key      string
 	Payload  string
-	Velocity uint8
-	Toggle   bool
+	Velocity uint16
+	Special  bool
 }
 
 func GetInputPorts() []string {
@@ -200,14 +200,14 @@ func StartListen(table *widget.Table, data [][]string, device string, mapKeys ma
 		case msg.GetNoteStart(&ch, &key, &vel):
 			log.Printf("starting note %s (int: %v) on channel %v with velocity %v\n", midi.Note(key), key, ch, vel)
 			selectCell(table, data, key)
-			msg = doHotkey(mapKeys, ch, key, MIDI_BUTTON)
+			msg = doHotkey(mapKeys, ch, key, uint16(vel))
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
 					log.Printf("ERROR send: %s\n", err)
 				}
 			}
-			if !mapKeys[key].Toggle {
+			if !mapKeys[key].Special {
 				go func(ch uint8, key uint8) {
 					time.Sleep(200 * time.Millisecond)
 					msg = midi.NoteOn(ch, key, 0)
@@ -223,8 +223,8 @@ func StartListen(table *widget.Table, data [][]string, device string, mapKeys ma
 			//log.Printf("ending note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
 		case msg.GetControlChange(&ch, &cc, &val):
 			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
-			selectCell(table, data, cc)                // use cc instead of key as reference
-			msg = doHotkey(mapKeys, ch, cc, MIDI_KNOB) // use cc instead of key as reference
+			selectCell(table, data, cc)                  // use cc instead of key as reference
+			msg = doHotkey(mapKeys, ch, cc, uint16(val)) // use cc instead of key as reference
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
@@ -233,8 +233,8 @@ func StartListen(table *widget.Table, data [][]string, device string, mapKeys ma
 			}
 		case msg.GetPitchBend(&ch, &rel, &abs):
 			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
-			selectCell(table, data, ch)                  // use ch instead of key as reference
-			msg = doHotkey(mapKeys, ch, ch, MIDI_SLIDER) // use ch instead of key as reference
+			selectCell(table, data, ch)          // use ch instead of key as reference
+			msg = doHotkey(mapKeys, ch, ch, abs) // use ch instead of key as reference
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {

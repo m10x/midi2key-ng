@@ -1,15 +1,17 @@
 package pkgMidi
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
 	"github.com/go-vgo/robotgo"
 	"github.com/m10x/midi2key-ng/pkg/pkgCmd"
+	"github.com/m10x/midi2key-ng/pkg/pkgUtils"
 	"gitlab.com/gomidi/midi/v2"
 )
 
-func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, midiType string) midi.Message {
+func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi.Message {
 	var ok bool
 	var vel, curVel uint8
 
@@ -29,6 +31,24 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, midiType string)
 		payloadArr := strings.SplitN(payload, ":", 3)
 		device := strings.TrimSpace(payloadArr[0] + ":" + payloadArr[1])
 		action := strings.TrimSpace(payloadArr[2])
+
+		if mapKeys[key].MidiType == MIDI_KNOB && mapKeys[key].Special && val > uint16(mapKeys[key].Velocity) {
+			if strings.Contains(action, "+") {
+				action = strings.Replace(action, "+", "-", -1)
+			} else {
+				action = strings.Replace(action, "-", "+", -1)
+			}
+		}
+
+		if mapKeys[key].MidiType == MIDI_SLIDER && mapKeys[key].Special && strings.Contains(action, "=") {
+			percent := (float32(val) * 100) / float32(mapKeys[key].Velocity)
+			log.Printf("%f = (%d * 100) / %d", percent, val, mapKeys[key].Velocity)
+
+			action = pkgUtils.ReplaceStringInBetween(action, "=", "%", fmt.Sprintf("%d", int(percent)))
+			log.Println("Replaced Volume with ", action)
+
+		}
+
 		switch {
 		case strings.HasPrefix(device, "In:"):
 			for _, x := range pkgCmd.GetSources() {
@@ -115,13 +135,13 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, midiType string)
 
 	log.Printf("HOTKEY: %s\n", mapKeys[key].Payload)
 	var msg midi.Message
-	if mapKeys[key].Toggle {
-		if curVel == mapKeys[key].Velocity {
+	if mapKeys[key].Special {
+		if uint16(curVel) == mapKeys[key].Velocity {
 			vel = 0
 		}
 	}
 	mapCurrentVelocity[key] = vel
-	if midiType == MIDI_BUTTON { // Others arent supported yet
+	if mapKeys[key].MidiType == MIDI_BUTTON { // Others arent supported yet
 		msg = midi.NoteOn(ch, key, vel)
 	}
 
