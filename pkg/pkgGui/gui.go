@@ -40,6 +40,7 @@ var (
 	btnDeleteRow   *widget.Button
 	btnEditRow     *widget.Button
 	checkSpecial   *widget.Check
+	entryVelocity  *widget.Entry
 	selectedCell   widget.TableCellID
 	popupPayload   *widget.PopUp
 	table          *widget.Table
@@ -88,8 +89,12 @@ func Startup(versionTool string, versionPref int) {
 		})
 
 	table.OnSelected = func(id widget.TableCellID) {
-		selectedCell = id
-		log.Println("Selected Cell Col", selectedCell.Col, "Row", selectedCell.Row)
+		table.Select(widget.TableCellID{
+			Row: id.Row,
+			Col: 0,
+		})
+		log.Println("Selected Cell Col", id.Col, "Row", id.Row)
+		selectedCell = id // wichtig für deleteRow und editRow
 	}
 
 	table.SetColumnWidth(0, 39)
@@ -99,7 +104,7 @@ func Startup(versionTool string, versionPref int) {
 	table.SetColumnWidth(4, 60)
 
 	btnAddRow = widget.NewButton("Add Row", func() {
-		data = append(data, []string{"-", "-", "-", "255", "false"})
+		data = append(data, []string{"-", "-", "-", "0", "false"})
 		table.Refresh()
 		setPreferences(versionPref)
 	})
@@ -108,6 +113,8 @@ func Startup(versionTool string, versionPref int) {
 		for i, x := range data {
 			if i != selectedCell.Row && i != 0 { // Dont apped header again, dont append row to delete
 				tmpData = append(tmpData, x)
+			} else {
+				log.Println(i, x)
 			}
 		}
 		data = tmpData
@@ -132,6 +139,19 @@ func Startup(versionTool string, versionPref int) {
 			btnNote.Enable()
 
 			configureCheckSpecial(strSpecialDisabled)
+			if len(btnNote.Text) < 6 {
+				switch btnNote.Text[:1] {
+				case pkgMidi.MIDI_BUTTON:
+					entryVelocity.Text = "255"
+				case pkgMidi.MIDI_KNOB:
+					entryVelocity.Text = "33"
+				case pkgMidi.MIDI_SLIDER:
+					entryVelocity.Text = "16256"
+				default:
+					log.Printf("ERROR widget.NewButton: No valid Midi Type: %s\n", btnNote.Text)
+				}
+				entryVelocity.Refresh()
+			}
 		})
 		lblDescription := widget.NewLabel("Description:")
 		entryDescription := widget.NewEntry()
@@ -174,7 +194,7 @@ func Startup(versionTool string, versionPref int) {
 			}
 		})
 		lblVelocity := widget.NewLabel("Velocity:")
-		entryVelocity := widget.NewEntry()
+		entryVelocity = widget.NewEntry()
 		lblToggle := widget.NewLabel("Special:")
 		checkSpecial = widget.NewCheck(strSpecialDisabled, nil)
 		if btnNote.Text == strNoButton {

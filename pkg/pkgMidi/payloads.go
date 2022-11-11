@@ -42,7 +42,7 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 
 		if mapKeys[key].MidiType == MIDI_SLIDER && mapKeys[key].Special && strings.Contains(action, "=") {
 			percent := (float32(val) * 100) / float32(mapKeys[key].Velocity)
-			log.Printf("%f = (%d * 100) / %d", percent, val, mapKeys[key].Velocity)
+			log.Printf("%f = (%d * 100) / %d\n", percent, val, mapKeys[key].Velocity)
 
 			action = pkgUtils.ReplaceStringInBetween(action, "=", "%", fmt.Sprintf("%d", int(percent)))
 			log.Println("Replaced Volume with ", action)
@@ -137,15 +137,15 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 	var msg midi.Message
 
 	vel := uint8(mapKeys[key].Velocity)
-	if mapKeys[key].Special {
+	if mapKeys[key].MidiType == MIDI_BUTTON && mapKeys[key].Special {
 		if uint16(curVel) == mapKeys[key].Velocity {
-			log.Printf("Set vel 0")
+			log.Printf("Set vel 0\n")
 			vel = 0
 		}
 	}
 	mapCurrentVelocity[key] = vel
 	if mapKeys[key].MidiType == MIDI_BUTTON { // Others arent supported yet
-		log.Printf("Simulate Noteon, ch=%d, key=%d, vel=%d", ch, key, vel)
+		log.Printf("Simulate Noteon, ch=%d, key=%d, vel=%d\n", ch, key, vel)
 		msg = midi.NoteOn(ch, key, vel)
 	}
 

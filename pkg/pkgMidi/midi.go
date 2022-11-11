@@ -141,7 +141,8 @@ func selectCell(table *widget.Table, data [][]string, pressedKey uint8) {
 		if x[0][1:] == strconv.Itoa(int((pressedKey))) {
 			table.Select(widget.TableCellID{
 				Row: i,
-				Col: 0})
+				Col: 0,
+			})
 			break
 		}
 	}
