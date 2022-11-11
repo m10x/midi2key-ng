@@ -13,7 +13,7 @@ import (
 
 func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi.Message {
 	var ok bool
-	var vel, curVel uint8
+	var curVel uint8
 
 	if mapKeys[key].Key == "" {
 		log.Printf("doHotkey: Key %v isn't assigned yet\n", key)
@@ -135,13 +135,17 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 
 	log.Printf("HOTKEY: %s\n", mapKeys[key].Payload)
 	var msg midi.Message
+
+	vel := uint8(mapKeys[key].Velocity)
 	if mapKeys[key].Special {
 		if uint16(curVel) == mapKeys[key].Velocity {
+			log.Printf("Set vel 0")
 			vel = 0
 		}
 	}
 	mapCurrentVelocity[key] = vel
 	if mapKeys[key].MidiType == MIDI_BUTTON { // Others arent supported yet
+		log.Printf("Simulate Noteon, ch=%d, key=%d, vel=%d", ch, key, vel)
 		msg = midi.NoteOn(ch, key, vel)
 	}
 
