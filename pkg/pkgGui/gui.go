@@ -28,19 +28,20 @@ var (
 	strStartListen = "Start Listen"
 	strStopListen  = "Stop Listen"
 
-	header  = []string{"key", "payload", "description", "velocity", "toggle"}
+	header  = []string{"key", "payload", "description", "velocity", "special"}
 	data    = [][]string{header}
 	mapKeys map[uint8]pkgMidi.KeyStruct
 
 	comboSelect    *widget.Select
-	comboHotkey    *widget.Select
+	comboPayload   *widget.Select
 	btnListen      *widget.Button
 	btnNote        *widget.Button
 	btnAddRow      *widget.Button
 	btnDeleteRow   *widget.Button
 	btnEditRow     *widget.Button
+	checkSpecial   *widget.Check
 	selectedCell   widget.TableCellID
-	popupHotkey    *widget.PopUp
+	popupPayload   *widget.PopUp
 	table          *widget.Table
 	menuItemListen *fyne.MenuItem
 	btnRefresh     *widget.Button
@@ -122,28 +123,32 @@ func Startup(versionTool string, versionPref int) {
 		popupEdit := widget.NewModalPopUp(nil, w.Canvas())
 
 		lblNote := widget.NewLabel("Note:")
-		btnNote = widget.NewButton("Press this Button", func() {
+		strNoButton := "Press this Button"
+		strSpecialDisabled := "Waiting for key..."
+		btnNote = widget.NewButton(strNoButton, func() {
 			btnNote.Text = "Listening for Input..."
 			btnNote.Disable()
 			btnNote.Text = pkgMidi.GetOneInput(comboSelect.Selected)
 			btnNote.Enable()
+
+			configureCheckSpecial(strSpecialDisabled)
 		})
 		lblDescription := widget.NewLabel("Description:")
 		entryDescription := widget.NewEntry()
-		lblHotkey := widget.NewLabel("Hotkey type:")
-		entryHotkey := widget.NewEntry()
-		comboHotkey = widget.NewSelect([]string{"Command Line Command", "Keypress (combo)", "Write String", "Audio Control"}, func(value string) {
-			// TODO: Add Popup to speficy the wanted hotkey. Eg. if Audio Control: Popup to choose if Mute, Volume Up, Volume Down
-			if comboHotkey.SelectedIndex() == 0 {
-				entryHotkey.Text = "Replace with Command"
-				entryHotkey.Refresh()
-			} else if comboHotkey.SelectedIndex() == 1 {
-				entryHotkey.Text = "Keypress: a,ctrl,alt,cmd"
-				entryHotkey.Refresh()
-			} else if comboHotkey.SelectedIndex() == 2 {
-				entryHotkey.Text = "Write: example"
-				entryHotkey.Refresh()
-			} else if comboHotkey.SelectedIndex() == 3 {
+		lblPayload := widget.NewLabel("Payload:")
+		entryPayload := widget.NewEntry()
+		comboPayload = widget.NewSelect([]string{"Command Line Command", "Keypress (combo)", "Write String", "Audio Control"}, func(value string) {
+			// TODO: Add Popup to speficy the wanted Payload. Eg. if Audio Control: Popup to choose if Mute, Volume Up, Volume Down
+			if comboPayload.SelectedIndex() == 0 {
+				entryPayload.Text = "Replace with Command"
+				entryPayload.Refresh()
+			} else if comboPayload.SelectedIndex() == 1 {
+				entryPayload.Text = "Keypress: a,ctrl,alt,cmd"
+				entryPayload.Refresh()
+			} else if comboPayload.SelectedIndex() == 2 {
+				entryPayload.Text = "Write: example"
+				entryPayload.Refresh()
+			} else if comboPayload.SelectedIndex() == 3 {
 				devices := []string{}
 				for _, sink := range pkgCmd.GetSinks() {
 					devices = append(devices, sink.Description)
@@ -156,31 +161,34 @@ func Startup(versionTool string, versionPref int) {
 				}
 				comboDevice := widget.NewSelect(devices, nil)
 				comboSound := widget.NewSelect([]string{"(Un)Mute", "Volume +10%", "Volume -10%", "Volume =50%"}, nil)
-				btnSaveHotkey := widget.NewButton("Save", func() {
-					entryHotkey.Text = "Audio: " + comboDevice.Selected + ": " + comboSound.Selected
-					entryHotkey.Refresh()
-					popupHotkey.Hide()
+				btnSavePayload := widget.NewButton("Save", func() {
+					entryPayload.Text = "Audio: " + comboDevice.Selected + ": " + comboSound.Selected
+					entryPayload.Refresh()
+					popupPayload.Hide()
 				})
-				btnCancelHotkey := widget.NewButton("Cancel", func() {
-					popupHotkey.Hide()
+				btnCancelPayload := widget.NewButton("Cancel", func() {
+					popupPayload.Hide()
 				})
-				popupHotkey = widget.NewModalPopUp(container.NewVBox(comboDevice, comboSound, container.NewHBox(btnSaveHotkey, btnCancelHotkey)), popupEdit.Canvas)
-				popupHotkey.Show()
+				popupPayload = widget.NewModalPopUp(container.NewVBox(comboDevice, comboSound, container.NewHBox(btnSavePayload, btnCancelPayload)), popupEdit.Canvas)
+				popupPayload.Show()
 			}
 		})
 		lblVelocity := widget.NewLabel("Velocity:")
 		entryVelocity := widget.NewEntry()
-		lblToggle := widget.NewLabel("Toggle:")
-		checkToggle := widget.NewCheck("Toggle LED", nil)
+		lblToggle := widget.NewLabel("Special:")
+		checkSpecial = widget.NewCheck(strSpecialDisabled, nil)
+		if btnNote.Text == strNoButton {
+			checkSpecial.Disable()
+		}
 
 		btnSave := widget.NewButton("Save", func() {
 
-			if comboHotkey.SelectedIndex() > -1 { // only add hotkey if a hotkeytype was selected
+			if comboPayload.SelectedIndex() > -1 { // only add hotkey if a hotkeytype was selected
 				data[rowToEdit][0] = btnNote.Text
-				data[rowToEdit][1] = entryHotkey.Text
+				data[rowToEdit][1] = entryPayload.Text
 				data[rowToEdit][2] = entryDescription.Text
 				data[rowToEdit][3] = entryVelocity.Text
-				if checkToggle.Checked {
+				if checkSpecial.Checked {
 					data[rowToEdit][4] = "true"
 				} else {
 					data[rowToEdit][4] = "false"
@@ -195,14 +203,15 @@ func Startup(versionTool string, versionPref int) {
 		})
 
 		btnNote.Text = data[rowToEdit][0]
-		entryHotkey.Text = data[rowToEdit][1]
+		configureCheckSpecial(strSpecialDisabled)
+		entryPayload.Text = data[rowToEdit][1]
 		entryDescription.Text = data[rowToEdit][2]
 		entryVelocity.Text = data[rowToEdit][3]
 		if data[rowToEdit][4] == "true" {
-			checkToggle.Checked = true
+			checkSpecial.Checked = true
 		}
 
-		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblHotkey, container.NewVBox(comboHotkey, entryHotkey), lblDescription, entryDescription, lblVelocity, entryVelocity, lblToggle, checkToggle), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
+		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblPayload, container.NewVBox(comboPayload, entryPayload), lblDescription, entryDescription, lblVelocity, entryVelocity, lblToggle, checkSpecial), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
 		popupEdit.Resize(fyne.NewSize(400, 200))
 		popupEdit.Show()
 	})
@@ -232,6 +241,28 @@ func Startup(versionTool string, versionPref int) {
 	w.ShowAndRun()
 }
 
+func configureCheckSpecial(strSpecialDisabled string) {
+	if len(btnNote.Text) > 6 {
+		checkSpecial.Disable()
+		checkSpecial.Text = strSpecialDisabled
+		checkSpecial.Refresh()
+	} else {
+		checkSpecial.Enable()
+		switch btnNote.Text[:1] {
+		case pkgMidi.MIDI_BUTTON:
+			checkSpecial.Text = "Toggle LED"
+		case pkgMidi.MIDI_KNOB:
+			checkSpecial.Text = "Left = Inverse"
+		case pkgMidi.MIDI_SLIDER:
+			checkSpecial.Text = "Absolute Control"
+		default:
+			checkSpecial.Text = "Err: Unkown Midi Type"
+			checkSpecial.Disable()
+		}
+		checkSpecial.Refresh()
+	}
+}
+
 func refreshDevices() {
 	devices := pkgMidi.GetInputPorts()
 	if len(devices) == 0 {
@@ -243,14 +274,16 @@ func refreshDevices() {
 
 func fillMapKeys() {
 	for i := 1; i < len(data); i++ {
-		var midiType int
+		var midiType string
 		switch data[i][COLUMN_KEY][:1] {
-		case "B":
+		case pkgMidi.MIDI_BUTTON:
 			midiType = pkgMidi.MIDI_BUTTON
-		case "K":
+		case pkgMidi.MIDI_KNOB:
 			midiType = pkgMidi.MIDI_KNOB
-		case "S":
+		case pkgMidi.MIDI_SLIDER:
 			midiType = pkgMidi.MIDI_SLIDER
+		default:
+			log.Println("ERROR fillMapKeys: Unknown midiType", data[i][COLUMN_KEY])
 		}
 
 		keyId, err := strconv.Atoi(data[i][COLUMN_KEY][1:]) // first char is midiType
