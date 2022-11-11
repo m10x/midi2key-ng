@@ -5,10 +5,9 @@ import (
 )
 
 const (
-	VERSION_TOOL = "pre v1.0"
-	VERSION_PREF = 1
+	VERSION_TOOL = "v1.0.0"
 )
 
 func main() {
-	pkgGui.Startup(VERSION_TOOL, VERSION_PREF)
+	pkgGui.Startup(VERSION_TOOL)
 }

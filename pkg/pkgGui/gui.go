@@ -51,7 +51,7 @@ var (
 	a              fyne.App
 )
 
-func Startup(versionTool string, versionPref int) {
+func Startup(versionTool string) {
 	a = app.NewWithID("de.m10x.midi2key-ng")
 	w := a.NewWindow("midi2key-ng " + versionTool)
 	w.Resize(fyne.NewSize(1000, 400))
@@ -106,7 +106,7 @@ func Startup(versionTool string, versionPref int) {
 	btnAddRow = widget.NewButton("Add Row", func() {
 		data = append(data, []string{"-", "-", "-", "0", "false"})
 		table.Refresh()
-		setPreferences(versionPref)
+		setPreferences(versionTool)
 	})
 	btnDeleteRow = widget.NewButton("Delete Row", func() {
 		tmpData := [][]string{header}
@@ -119,7 +119,7 @@ func Startup(versionTool string, versionPref int) {
 		}
 		data = tmpData
 		table.Refresh()
-		setPreferences(versionPref)
+		setPreferences(versionTool)
 	})
 	btnEditRow = widget.NewButton("Edit Row", func() {
 		if selectedCell.Row == 0 {
@@ -207,15 +207,12 @@ func Startup(versionTool string, versionPref int) {
 			data[rowToEdit][COLUMN_DESCRIPTION] = entryDescription.Text
 			data[rowToEdit][COLUMN_VELOCITY] = entryVelocity.Text
 			if checkSpecial.Checked {
-				log.Println("TRUE")
 				data[rowToEdit][COLUMN_SPECIAL] = "true"
 			} else {
-				log.Println("FALSE")
-
 				data[rowToEdit][COLUMN_SPECIAL] = "false"
 			}
 			table.Refresh()
-			setPreferences(versionPref)
+			setPreferences(versionTool)
 			popupEdit.Hide()
 		})
 		btnCancel := widget.NewButton("Cancel", func() {
@@ -254,7 +251,7 @@ func Startup(versionTool string, versionPref int) {
 		desk.SetSystemTrayIcon(resourceMidiOffPng)
 	}
 
-	getPreferences(versionPref)
+	getPreferences(versionTool)
 
 	w.ShowAndRun()
 }

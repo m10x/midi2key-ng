@@ -28,16 +28,17 @@ Edit an Assignment
 ![image](https://user-images.githubusercontent.com/4344935/199975097-e79b21e4-bd12-433b-9003-53939384a237.png)
 
 ## How to Install
+
+### Option 1: Download precompiled binary (currenlty only Linux)
+Download a precompiled binary from the [latest Release](https://github.com/m10x/midi2key-ng/releases).  
+
+### Option 2: Fetch using go (Linux, Windows, MacOS)
 The repository can be fetched and installed using Go.  
 `go install -v github.com/m10x/midi2key-ng@latest`  
   
-TODO: Release Precompiled Binaries
-
 ## Roadmap
 - add optional textbox with log output
 - add code comments
-- test on different vms
-- release precompiled binaries
 - export / import Key Mapping
 - add info button to systray, implement hide/show, option: minimize on exit
 - improve design, layout etc.

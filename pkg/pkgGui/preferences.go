@@ -36,21 +36,22 @@ func stringToData(str string) {
 	}
 }
 
-func setPreferences(versionPref int) {
+func setPreferences(versionTool string) {
 	log.Println("saving preferences")
-	a.Preferences().SetInt("version", versionPref)
+	a.Preferences().SetString("version", versionTool)
 	a.Preferences().SetString("device", comboSelect.Selected)
 	a.Preferences().SetString("data", dataToString())
 }
 
-func getPreferences(versionPref int) {
-	prefVersion := a.Preferences().IntWithFallback("version", 0)
-	if prefVersion == 0 {
+func getPreferences(versionTool string) {
+	versionPref := a.Preferences().StringWithFallback("version", "none")
+	if versionPref == "none" {
 		log.Println("No Preferences found")
 		return
-	} else if prefVersion != versionPref {
-		log.Println("Incompatible Preferences Version")
-		return
+	} else if versionPref != "versionTool" {
+		log.Printf("Version of preferences (%s) may not be compatible with version of midi2key-ng (%s)\n", versionPref, versionTool)
+	} else {
+		log.Printf("Loading preferences...")
 	}
 
 	deviceOptions := comboSelect.Options
@@ -62,4 +63,5 @@ func getPreferences(versionPref int) {
 	}
 	prefData := a.Preferences().StringWithFallback("data", "")
 	stringToData(prefData)
+	log.Printf("Prefences loaded")
 }
