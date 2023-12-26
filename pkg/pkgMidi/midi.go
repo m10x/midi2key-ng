@@ -80,31 +80,12 @@ func GetOneInput(device string) string {
 			m.Lock()
 			returnVal = MIDI_KNOB + strconv.Itoa(int(cc)) // use cc instead of key as identifier
 			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
-
-			/* not needed as this doesn't effect the lightning of the control
-			msg = midi.NoteOn(ch, cc, 60)
-			err := send(msg)
-			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
-				log.Printf("ERROR send: %s\n", err)
-			}
-			*/
-
 			m.Unlock()
 		case msg.GetPitchBend(&ch, &rel, &abs):
 			m.Lock()
 			returnVal = MIDI_SLIDER + strconv.Itoa(int(ch)) // use ch instead of key as identifier
 			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
-
-			/* Not needed as slider has no lightning
-			msg = midi.Pitchbend(ch, rel)
-			err := send(msg)
-			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
-				log.Printf("ERROR send: %s\n", err)
-			}
-			*/
-
 			m.Unlock()
-
 		default:
 			log.Printf("received unsupported %s\n", msg)
 			m.Lock()
@@ -181,6 +162,13 @@ func StartListen(table *widget.Table, data [][]string, device string, mapKeys ma
 			log.Printf("ERROR send: %s\n", err)
 		}
 		mapCurrentVelocity[uint8(i)] = 0
+	}
+	for i := 48; i < 56; i++ {
+		msg := midi.ControlChange(0, uint8(i), 0)
+		err := send(msg)
+		if err != nil {
+			log.Printf("ERROR send: %s\n", err)
+		}
 	}
 
 	msg := midi.NoteOn(0, uint8(37), 255)
