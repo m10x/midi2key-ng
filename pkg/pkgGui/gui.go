@@ -21,6 +21,8 @@ const (
 	COLUMN_DESCRIPTION = 2
 	COLUMN_VELOCITY    = 3
 	COLUMN_SPECIAL     = 4
+
+	COLUMN_COUNT = 5
 )
 
 var (
@@ -28,8 +30,7 @@ var (
 	strStartListen = "Start Listen"
 	strStopListen  = "Stop Listen"
 
-	header  = []string{"key", "payload", "description", "velocity", "special"}
-	data    = [][]string{header}
+	data    = [][]string{}
 	mapKeys map[uint8]pkgMidi.KeyStruct
 
 	comboSelect    *widget.Select
@@ -56,7 +57,7 @@ var (
 func Startup(versionTool string) {
 	a = app.NewWithID("de.m10x.midi2key-ng")
 	w = a.NewWindow("midi2key-ng " + versionTool)
-	w.Resize(fyne.NewSize(1000, 400))
+	w.Resize(fyne.NewSize(1050, 400))
 
 	mapKeys = make(map[uint8]pkgMidi.KeyStruct)
 
@@ -79,9 +80,9 @@ func Startup(versionTool string) {
 
 	hBoxSelect := container.NewHBox(btnRefresh, btnListen)
 
-	table = widget.NewTable(
+	table = widget.NewTableWithHeaders(
 		func() (int, int) {
-			return len(data), len(data[0])
+			return len(data), COLUMN_COUNT
 		},
 		func() fyne.CanvasObject {
 			return widget.NewLabel("tmp")
@@ -105,15 +106,18 @@ func Startup(versionTool string) {
 	table.SetColumnWidth(3, 70)
 	table.SetColumnWidth(4, 60)
 
+	table.CreateHeader = headerCreate
+	table.UpdateHeader = headerUpdate
+
 	btnAddRow = widget.NewButton("Add Row", func() {
 		data = append(data, []string{"-", "-", "-", "0", "false"})
 		table.Refresh()
 		setPreferences(versionTool)
 	})
 	btnDeleteRow = widget.NewButton("Delete Row", func() {
-		tmpData := [][]string{header}
+		tmpData := [][]string{}
 		for i, x := range data {
-			if i != selectedCell.Row && i != 0 { // Dont apped header again, dont append row to delete
+			if i != selectedCell.Row { // dont append row to delete
 				tmpData = append(tmpData, x)
 			} else {
 				log.Println(i, x)
@@ -124,10 +128,6 @@ func Startup(versionTool string) {
 		setPreferences(versionTool)
 	})
 	btnEditRow = widget.NewButton("Edit Row", func() {
-		if selectedCell.Row == 0 {
-			return
-		}
-
 		rowToEdit := selectedCell.Row
 		popupEdit := widget.NewModalPopUp(nil, w.Canvas())
 
@@ -354,4 +354,39 @@ func listen() {
 		btnDeleteRow.Enable()
 		btnEditRow.Enable()
 	}
+}
+
+type ActiveHeader struct {
+	widget.Label
+	OnTapped func()
+}
+
+func headerCreate() fyne.CanvasObject {
+	h := &ActiveHeader{}
+	h.ExtendBaseWidget(h)
+	h.SetText("000")
+	return h
+}
+
+func headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
+	header := o.(*ActiveHeader)
+	header.TextStyle.Bold = true
+	switch id.Col {
+	case -1:
+		header.SetText(strconv.Itoa(id.Row + 1))
+	case 0:
+		header.SetText("Key")
+	case 1:
+		header.SetText("Payload")
+	case 2:
+		header.SetText("Description")
+	case 3:
+		header.SetText("Velocity")
+	case 4:
+		header.SetText("Special")
+	}
+
+	// header.OnTapped = func() {
+	// 	fmt.Printf("Header %d tapped\n", id.Col)
+	// }
 }

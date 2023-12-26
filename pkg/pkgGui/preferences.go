@@ -30,7 +30,7 @@ func dataToString() string {
 func stringToData(str string) {
 	for _, d := range strings.Split(str, PREF_LIMIT_SECOND) {
 		dataRow := strings.Split(d, PREF_LIMIT_FIRST)
-		if len(dataRow) == len(data[0]) { // empty or too short dataRow will cause fyne to crash
+		if len(dataRow) == COLUMN_COUNT { // empty or too short dataRow will cause fyne to crash
 			data = append(data, dataRow)
 		}
 	}
