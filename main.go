@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	VERSION_TOOL = "v1.0.0"
+	VERSION_TOOL = "v1.1.0"
 )
 
 func main() {

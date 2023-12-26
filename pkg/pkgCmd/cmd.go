@@ -20,13 +20,13 @@ type ApplicationSinkStruct struct {
 	Name        string // sinkinput: sink: Name
 	Description string // sinkinput: application.name, sink: Description
 
-	mute    bool // Mute
-	volume  int  // Volume (in %)
+	Mute    bool // Mute
+	Volume  int  // Volume (in %)
 	devType int  // Sink, Source or Sinkinput? Ist das nötig? Hole es aktuell aus dem String
 }
 
 // https://stackoverflow.com/a/20438245
-func ExeCmd(cmd string) ([]byte, error) {
+func ExeCmd(cmd string) (string, error) {
 	log.Printf("command is %s\n", cmd)
 	// splitting head => g++ parts => rest of the command
 	parts := strings.Fields(cmd)
@@ -35,10 +35,10 @@ func ExeCmd(cmd string) ([]byte, error) {
 
 	out, err := exec.Command(head, parts...).Output()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return out, nil
+	return string(out), nil
 }
 
 func GetSinks() []ApplicationSinkStruct {
@@ -58,10 +58,10 @@ func GetSinks() []ApplicationSinkStruct {
 		addApp.Index = strings.SplitN(sink, "\n", 2)[0]
 		addApp.Name = pkgUtils.GetStringInBetween(sink, "Name: ", "\n")
 		addApp.Description = "Out: " + pkgUtils.GetStringInBetween(sink, "Description: ", "\n")
-		addApp.mute = pkgUtils.GetStringInBetween(sink, "Mute: ", "\n") == "yes"
+		addApp.Mute = pkgUtils.GetStringInBetween(sink, "Mute: ", "\n") == "yes"
 		sinkVolumeStr := pkgUtils.GetStringInBetween(sink, "Volume: ", "\n")
 		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(pkgUtils.GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
-			addApp.volume = sinkVolume
+			addApp.Volume = sinkVolume
 		} else {
 			log.Println("Error in getSinks, while converting Volume String to int: " + err.Error())
 		}
@@ -90,10 +90,10 @@ func GetSources() []ApplicationSinkStruct {
 		addApp.Index = strings.SplitN(sink, "\n", 2)[0]
 		addApp.Name = pkgUtils.GetStringInBetween(sink, "Name: ", "\n")
 		addApp.Description = "In: " + pkgUtils.GetStringInBetween(sink, "Description: ", "\n")
-		addApp.mute = pkgUtils.GetStringInBetween(sink, "Mute: ", "\n") == "yes"
+		addApp.Mute = pkgUtils.GetStringInBetween(sink, "Mute: ", "\n") == "yes"
 		sinkVolumeStr := pkgUtils.GetStringInBetween(sink, "Volume: ", "\n")
 		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(pkgUtils.GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
-			addApp.volume = sinkVolume
+			addApp.Volume = sinkVolume
 		} else {
 			log.Println("Error in getSources, while converting Volume String to int: " + err.Error())
 		}
@@ -122,10 +122,10 @@ func GetSinkInputs() []ApplicationSinkStruct {
 		addApp.Index = strings.SplitN(sink, "\n", 2)[0]
 		addApp.Name = pkgUtils.GetStringInBetween(sink, "application.name = \"", "\"") // Only for flatpak, not for binary: GetStringInBetween(sink, "pipewire.access.portal.app_id = \"", "\"")
 		addApp.Description = "App: " + pkgUtils.GetStringInBetween(sink, "application.name = \"", "\"")
-		addApp.mute = pkgUtils.GetStringInBetween(sink, "Mute: ", "\n") == "yes"
+		addApp.Mute = pkgUtils.GetStringInBetween(sink, "Mute: ", "\n") == "yes"
 		sinkVolumeStr := pkgUtils.GetStringInBetween(sink, "Volume: ", "\n")
 		if sinkVolume, err := strconv.Atoi(strings.TrimSpace(pkgUtils.GetStringInBetween(sinkVolumeStr, " / ", "%"))); err == nil {
-			addApp.volume = sinkVolume
+			addApp.Volume = sinkVolume
 		} else {
 			log.Println("Error in getSinkInputs, while converting Volume String to int: " + err.Error())
 		}
@@ -135,4 +135,13 @@ func GetSinkInputs() []ApplicationSinkStruct {
 	}
 
 	return apps
+}
+
+func GetAppVolume(device string) int {
+	for _, x := range GetSinkInputs() {
+		if x.Description == device {
+			return x.Volume
+		}
+	}
+	return 0
 }

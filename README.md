@@ -1,5 +1,6 @@
 # midi2key-ng
 [![Release](https://img.shields.io/github/release/m10x/midi2key-ng.svg?color=brightgreen)](https://github.com/m10x/midi2key-ng/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/m10x/midi2key-ng)](https://goreportcard.com/report/github.com/m10x/midi2key-ng)
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/m10x/midi2key-ng)](https://golang.org/)
 [![Fyne.io](https://img.shields.io/badge/Fyne-v2-blue)](https://fyne.io/)
 [![Gomidi](https://img.shields.io/badge/Gomidi-v2-blue)](https://gitlab.com/gomidi/midi/)
@@ -7,7 +8,7 @@
 
 ## About
 
-Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Crossplatform for Linux, Windows and MacOS.
+Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Developed for Linux and a Behringer X Touch Mini, but most features are also working on Windows/MacOS and with other Midi Controllers.
 
 ## Features
 Give your midicontroller the ability to:
@@ -38,12 +39,18 @@ The repository can be fetched and installed using Go.
 `go install -v github.com/m10x/midi2key-ng@latest`  
   
 ## Roadmap
+- update fyne (versions higher than 2.4.1 are throwing errors)
+- check why systray icon is missing after fyne has been updated
+- build windows executable for midi2key-ng 1.1.0
+- warn if key is already assigend
+- reorder rows
+- multiple profiles
+- hotkeys to start/stop listening
 - implement soundboard functionality using [beep](https://github.com/faiface/beep)
 - add mouse emulation functionalities
 - add optional textbox with log output
 - add code comments
 - export / import Key Mapping
-- add info button to systray, implement hide/show, option: minimize on exit
 - improve design, layout etc.
 - test other midi controllers
 - add Windows Audio Control

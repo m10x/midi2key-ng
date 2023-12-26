@@ -12,7 +12,6 @@ import (
 	"gitlab.com/gomidi/midi/v2/drivers"
 
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver, default driver, runs solid
-	//_ "gitlab.com/gomidi/midi/v2/drivers/portmididrv" // autoregisters driver, alternative driver, seems to be buggy
 )
 
 const (
@@ -80,31 +79,12 @@ func GetOneInput(device string) string {
 			m.Lock()
 			returnVal = MIDI_KNOB + strconv.Itoa(int(cc)) // use cc instead of key as identifier
 			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
-
-			/* not needed as this doesn't effect the lightning of the control
-			msg = midi.NoteOn(ch, cc, 60)
-			err := send(msg)
-			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
-				log.Printf("ERROR send: %s\n", err)
-			}
-			*/
-
 			m.Unlock()
 		case msg.GetPitchBend(&ch, &rel, &abs):
 			m.Lock()
 			returnVal = MIDI_SLIDER + strconv.Itoa(int(ch)) // use ch instead of key as identifier
 			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
-
-			/* Not needed as slider has no lightning
-			msg = midi.Pitchbend(ch, rel)
-			err := send(msg)
-			if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
-				log.Printf("ERROR send: %s\n", err)
-			}
-			*/
-
 			m.Unlock()
-
 		default:
 			log.Printf("received unsupported %s\n", msg)
 			m.Lock()
@@ -148,7 +128,7 @@ func selectCell(table *widget.Table, data [][]string, pressedKey uint8) {
 	}
 }
 
-func StartListen(table *widget.Table, data [][]string, device string, mapKeys map[uint8]KeyStruct) string {
+func StartListen(table *widget.Table, lblOutput *widget.Label, data [][]string, device string, mapKeys map[uint8]KeyStruct) string {
 
 	// prepare to listen ---------
 	inPort := device
@@ -182,6 +162,13 @@ func StartListen(table *widget.Table, data [][]string, device string, mapKeys ma
 		}
 		mapCurrentVelocity[uint8(i)] = 0
 	}
+	for i := 48; i < 56; i++ {
+		msg := midi.ControlChange(0, uint8(i), 0)
+		err := send(msg)
+		if err != nil {
+			log.Printf("ERROR send: %s\n", err)
+		}
+	}
 
 	msg := midi.NoteOn(0, uint8(37), 255)
 	err = send(msg)
@@ -201,7 +188,7 @@ func StartListen(table *widget.Table, data [][]string, device string, mapKeys ma
 		case msg.GetNoteStart(&ch, &key, &vel):
 			log.Printf("starting note %s (int: %v) on channel %v with velocity %v\n", midi.Note(key), key, ch, vel)
 			selectCell(table, data, key)
-			msg = doHotkey(mapKeys, ch, key, uint16(vel))
+			msg = doHotkey(lblOutput, mapKeys, ch, key, uint16(vel))
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
@@ -224,8 +211,8 @@ func StartListen(table *widget.Table, data [][]string, device string, mapKeys ma
 			//log.Printf("ending note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
 		case msg.GetControlChange(&ch, &cc, &val):
 			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
-			selectCell(table, data, cc)                  // use cc instead of key as reference
-			msg = doHotkey(mapKeys, ch, cc, uint16(val)) // use cc instead of key as reference
+			selectCell(table, data, cc)                             // use cc instead of key as reference
+			msg = doHotkey(lblOutput, mapKeys, ch, cc, uint16(val)) // use cc instead of key as reference
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
@@ -234,8 +221,8 @@ func StartListen(table *widget.Table, data [][]string, device string, mapKeys ma
 			}
 		case msg.GetPitchBend(&ch, &rel, &abs):
 			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
-			selectCell(table, data, ch)          // use ch instead of key as reference
-			msg = doHotkey(mapKeys, ch, ch, abs) // use ch instead of key as reference
+			selectCell(table, data, ch)                     // use ch instead of key as reference
+			msg = doHotkey(lblOutput, mapKeys, ch, ch, abs) // use ch instead of key as reference
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {

@@ -3,15 +3,17 @@ package pkgMidi
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
+	"fyne.io/fyne/v2/widget"
 	"github.com/go-vgo/robotgo"
 	"github.com/m10x/midi2key-ng/pkg/pkgCmd"
 	"github.com/m10x/midi2key-ng/pkg/pkgUtils"
 	"gitlab.com/gomidi/midi/v2"
 )
 
-func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi.Message {
+func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi.Message {
 	var ok bool
 	var curVel uint8
 
@@ -25,11 +27,12 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 		return nil
 	}
 
+	var newVolume, device, payload string
 	switch {
 	case strings.HasPrefix(mapKeys[key].Payload, "Audio:"):
-		payload := strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Audio:"))
+		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Audio:"))
 		payloadArr := strings.SplitN(payload, ":", 3)
-		device := strings.TrimSpace(payloadArr[0] + ":" + payloadArr[1])
+		device = strings.TrimSpace(payloadArr[0] + ":" + payloadArr[1])
 		action := strings.TrimSpace(payloadArr[2])
 
 		if mapKeys[key].MidiType == MIDI_KNOB && mapKeys[key].Special && val > uint16(mapKeys[key].Velocity) {
@@ -58,11 +61,15 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 						pkgCmd.ExeCmd("pactl set-source-mute " + x.Name + " toggle")
 					case strings.Contains(action, "+"), strings.Contains(action, "-"):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
-						pkgCmd.ExeCmd("pactl set-source-volume " + x.Name + " " + actionTrimmed)
+						if !(strings.Contains(action, "+") && x.Volume >= 100) { // Dont increase further if volume is already >= 100%
+							pkgCmd.ExeCmd("pactl set-source-volume " + x.Name + " " + actionTrimmed)
+						}
+						newVolume, _ = pkgCmd.ExeCmd("pactl get-source-volume " + x.Name)
 					case strings.Contains(action, "="):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
 						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
 						pkgCmd.ExeCmd("pactl set-source-volume " + x.Name + " " + actionTrimmed)
+						newVolume, _ = pkgCmd.ExeCmd("pactl get-source-volume " + x.Name)
 					default:
 						log.Printf("Audio action %s is unknown (%s)\n", action, payloadArr)
 					}
@@ -76,11 +83,15 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 						pkgCmd.ExeCmd("pactl set-sink-mute " + x.Name + " toggle")
 					case strings.Contains(action, "+"), strings.Contains(action, "-"):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
-						pkgCmd.ExeCmd("pactl set-sink-volume " + x.Name + " " + actionTrimmed)
+						if !(strings.Contains(action, "+") && x.Volume >= 100) { // Dont increase further if volume is already >= 100%
+							pkgCmd.ExeCmd("pactl set-sink-volume " + x.Name + " " + actionTrimmed)
+						}
+						newVolume, _ = pkgCmd.ExeCmd("pactl get-sink-volume " + x.Name)
 					case strings.Contains(action, "="):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
 						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
 						pkgCmd.ExeCmd("pactl set-sink-volume " + x.Name + " " + actionTrimmed)
+						newVolume, _ = pkgCmd.ExeCmd("pactl get-sink-volume " + x.Name)
 					default:
 						log.Printf("Audio action %s is unknown (%s)\n", action, payloadArr)
 					}
@@ -94,7 +105,10 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 						pkgCmd.ExeCmd("pactl set-sink-input-mute " + x.Index + " toggle")
 					case strings.Contains(action, "+"), strings.Contains(action, "-"):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
-						pkgCmd.ExeCmd("pactl set-sink-input-volume " + x.Index + " " + actionTrimmed)
+						if !(strings.Contains(action, "+") && x.Volume >= 100) { // Dont increase further if volume is already >= 100%
+							pkgCmd.ExeCmd("pactl set-sink-input-volume " + x.Index + " " + actionTrimmed)
+						}
+						newVolume = strconv.Itoa(pkgCmd.GetAppVolume(device))
 					case strings.Contains(action, "="):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
 						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
@@ -105,10 +119,10 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 				}
 			}
 		default:
-			log.Printf("Device-Type %s is unkown\n", device)
+			log.Printf("Device-Type %s is unknown\n", device)
 		}
 	case strings.HasPrefix(mapKeys[key].Payload, "Keypress:"):
-		payload := strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Keypress:"))
+		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Keypress:"))
 		payloadArr := strings.SplitN(payload, ",", 2)
 
 		if len(payloadArr) == 1 {
@@ -120,10 +134,11 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 		}
 
 	case strings.HasPrefix(mapKeys[key].Payload, "Write:"):
-		payload := strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Write:"))
+		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Write:"))
 		robotgo.TypeStr(payload)
 	default:
-		stdout, err := pkgCmd.ExeCmd(mapKeys[key].Payload)
+		payload = mapKeys[key].Payload
+		stdout, err := pkgCmd.ExeCmd(payload)
 
 		if err != nil {
 			log.Println("Error cmd.Output" + err.Error())
@@ -133,7 +148,7 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 		log.Println("Output: " + string(stdout))
 	}
 
-	log.Printf("HOTKEY: %s\n", mapKeys[key].Payload)
+	log.Printf("HOTKEY: %s\n", payload)
 	var msg midi.Message
 
 	vel := uint8(mapKeys[key].Velocity)
@@ -144,9 +159,40 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 		}
 	}
 	mapCurrentVelocity[key] = vel
-	if mapKeys[key].MidiType == MIDI_BUTTON { // Others arent supported yet
+	switch mapKeys[key].MidiType {
+	case MIDI_BUTTON:
 		log.Printf("Simulate Noteon, ch=%d, key=%d, vel=%d\n", ch, key, vel)
 		msg = midi.NoteOn(ch, key, vel)
+		lblOutput.Text = payload
+		lblOutput.Refresh()
+	// Behringer X-Touch Mini https://stackoverflow.com/a/49740979
+	case MIDI_KNOB:
+		if strings.Contains(newVolume, "/") {
+			newVolume = pkgUtils.GetStringInBetween(newVolume, " / ", "%")
+		}
+		key += 32
+		vel = 33
+		// is it used to control volume?
+		if newVolume != "" {
+			i, err := strconv.Atoi(strings.TrimSpace(newVolume))
+			if err != nil {
+				log.Print(err.Error())
+			}
+			log.Print("i", i)
+			vel += uint8(i / 10)
+			log.Print("Velocity", vel)
+		} else { // not used for volume control, show the velocity used
+			if val <= 30 {
+				vel = 54
+			} else {
+				vel = 49
+			}
+		}
+		log.Printf("Simulate Controlchange, ch=%d, cc=%d, vel=%d\n", ch, key, vel)
+		msg = midi.ControlChange(ch, key, vel)
+		log.Print("newVolume", newVolume)
+		lblOutput.Text = device + newVolume
+		lblOutput.Refresh()
 	}
 
 	return msg

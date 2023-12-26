@@ -30,7 +30,7 @@ func dataToString() string {
 func stringToData(str string) {
 	for _, d := range strings.Split(str, PREF_LIMIT_SECOND) {
 		dataRow := strings.Split(d, PREF_LIMIT_FIRST)
-		if len(dataRow) == len(data[0]) { // empty or too short dataRow will cause fyne to crash
+		if len(dataRow) == COLUMN_COUNT { // empty or too short dataRow will cause fyne to crash
 			data = append(data, dataRow)
 		}
 	}
@@ -48,7 +48,7 @@ func getPreferences(versionTool string) {
 	if versionPref == "none" {
 		log.Println("No Preferences found")
 		return
-	} else if versionPref != "versionTool" {
+	} else if versionPref != versionTool {
 		log.Printf("Version of preferences (%s) may not be compatible with version of midi2key-ng (%s)\n", versionPref, versionTool)
 	} else {
 		log.Printf("Loading preferences...")
@@ -63,5 +63,5 @@ func getPreferences(versionTool string) {
 	}
 	prefData := a.Preferences().StringWithFallback("data", "")
 	stringToData(prefData)
-	log.Printf("Prefences loaded")
+	log.Printf("Preferences loaded")
 }
