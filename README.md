@@ -39,7 +39,9 @@ The repository can be fetched and installed using Go.
 `go install -v github.com/m10x/midi2key-ng@latest`  
   
 ## Roadmap
-- update fyne (versions higher than 2.4.1 are throwing errors), check why systray icon is missing after fyne has been updated
+- update fyne (versions higher than 2.4.1 are throwing errors)
+- check why systray icon is missing after fyne has been updated
+- build windows executable for midi2key-ng 1.1.0
 - warn if key is already assigend
 - reorder rows
 - multiple profiles
