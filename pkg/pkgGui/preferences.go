@@ -63,5 +63,5 @@ func getPreferences(versionTool string) {
 	}
 	prefData := a.Preferences().StringWithFallback("data", "")
 	stringToData(prefData)
-	log.Printf("Prefences loaded")
+	log.Printf("Preferences loaded")
 }
