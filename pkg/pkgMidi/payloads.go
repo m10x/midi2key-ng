@@ -119,7 +119,7 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 				}
 			}
 		default:
-			log.Printf("Device-Type %s is unkown\n", device)
+			log.Printf("Device-Type %s is unknown\n", device)
 		}
 	case strings.HasPrefix(mapKeys[key].Payload, "Keypress:"):
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Keypress:"))

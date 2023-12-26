@@ -276,7 +276,7 @@ func configureCheckSpecial(strSpecialDisabled string) {
 		case pkgMidi.MIDI_SLIDER:
 			checkSpecial.Text = "Absolute Control"
 		default:
-			checkSpecial.Text = "Err: Unkown Midi Type"
+			checkSpecial.Text = "Err: Unknown Midi Type"
 			checkSpecial.Disable()
 		}
 		checkSpecial.Refresh()
