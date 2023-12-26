@@ -39,6 +39,7 @@ var (
 	btnAddRow      *widget.Button
 	btnDeleteRow   *widget.Button
 	btnEditRow     *widget.Button
+	lblOutput      *widget.Label
 	checkSpecial   *widget.Check
 	entryVelocity  *widget.Entry
 	selectedCell   widget.TableCellID
@@ -49,11 +50,12 @@ var (
 	menuTray       *fyne.Menu
 	desk           desktop.App
 	a              fyne.App
+	w              fyne.Window
 )
 
 func Startup(versionTool string) {
 	a = app.NewWithID("de.m10x.midi2key-ng")
-	w := a.NewWindow("midi2key-ng " + versionTool)
+	w = a.NewWindow("midi2key-ng " + versionTool)
 	w.Resize(fyne.NewSize(1000, 400))
 
 	mapKeys = make(map[uint8]pkgMidi.KeyStruct)
@@ -231,7 +233,9 @@ func Startup(versionTool string) {
 		popupEdit.Show()
 	})
 
-	hBoxTable := container.NewHBox(btnAddRow, btnEditRow, btnDeleteRow)
+	lblOutput = widget.NewLabel("")
+
+	hBoxTable := container.NewHBox(btnAddRow, btnEditRow, btnDeleteRow, lblOutput)
 
 	w.SetContent(container.NewBorder(
 		container.NewBorder(nil, nil, hello, hBoxSelect, comboSelect), hBoxTable, nil, nil,
@@ -326,7 +330,7 @@ func fillMapKeys() {
 func listen() {
 	if btnListen.Text == strStartListen {
 		fillMapKeys()
-		pkgMidi.StartListen(table, data, comboSelect.Selected, mapKeys)
+		pkgMidi.StartListen(table, lblOutput, data, comboSelect.Selected, mapKeys)
 		btnListen.Text = strStopListen
 		btnListen.Refresh()
 		menuItemListen.Label = strStopListen
