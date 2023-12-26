@@ -41,7 +41,7 @@ The repository can be fetched and installed using Go.
 ## Roadmap
 - update fyne (versions higher than 2.4.1 are throwing errors)
 - check why systray icon is missing after fyne has been updated
-- build windows executable for midi2key-ng 1.1.0
+- build midi2key-ng 1.1.0 executables (cross compiling didn't work anymore using the script)
 - warn if key is already assigend
 - reorder rows
 - multiple profiles
