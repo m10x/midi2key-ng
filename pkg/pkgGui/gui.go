@@ -51,12 +51,11 @@ var (
 	menuTray       *fyne.Menu
 	desk           desktop.App
 	a              fyne.App
-	w              fyne.Window
 )
 
 func Startup(versionTool string) {
 	a = app.NewWithID("de.m10x.midi2key-ng")
-	w = a.NewWindow("midi2key-ng " + versionTool)
+	w := a.NewWindow("midi2key-ng " + versionTool)
 	w.Resize(fyne.NewSize(1050, 400))
 
 	mapKeys = make(map[uint8]pkgMidi.KeyStruct)
