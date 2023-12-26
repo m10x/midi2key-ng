@@ -12,7 +12,6 @@ import (
 	"gitlab.com/gomidi/midi/v2/drivers"
 
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv" // autoregisters driver, default driver, runs solid
-	//_ "gitlab.com/gomidi/midi/v2/drivers/portmididrv" // autoregisters driver, alternative driver, seems to be buggy
 )
 
 const (
