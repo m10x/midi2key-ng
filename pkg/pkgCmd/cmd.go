@@ -136,3 +136,12 @@ func GetSinkInputs() []ApplicationSinkStruct {
 
 	return apps
 }
+
+func GetAppVolume(device string) int {
+	for _, x := range GetSinkInputs() {
+		if x.Description == device {
+			return x.Volume
+		}
+	}
+	return 0
+}

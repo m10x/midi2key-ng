@@ -106,6 +106,7 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 						if !(strings.Contains(action, "+") && x.Volume >= 110) { // Dont increase further if volume is already >= 110%
 							pkgCmd.ExeCmd("pactl set-sink-input-volume " + x.Index + " " + actionTrimmed)
 						}
+						newVolume = strconv.Itoa(pkgCmd.GetAppVolume(device))
 					case strings.Contains(action, "="):
 						actionTrimmed := strings.TrimSpace(strings.TrimPrefix(action, "Volume"))
 						actionTrimmed = strings.TrimSpace(strings.TrimPrefix(actionTrimmed, "="))
@@ -161,7 +162,9 @@ func doHotkey(mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi
 		msg = midi.NoteOn(ch, key, vel)
 	// Behringer X-Touch Mini https://stackoverflow.com/a/49740979
 	case MIDI_KNOB:
-		newVolume = pkgUtils.GetStringInBetween(newVolume, " / ", "%")
+		if strings.Contains(newVolume, "/") {
+			newVolume = pkgUtils.GetStringInBetween(newVolume, " / ", "%")
+		}
 		key += 32
 		vel = 32
 		// is it used to control volume?
