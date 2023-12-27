@@ -56,6 +56,9 @@ The repository can be fetched and installed using Go.
 - add Windows Audio Control
 - add MacOS Audio Control
 
+## For Developers
+- Install robotgo requirements
+
 ## Credits
 
 ### Frontend Framework:  
