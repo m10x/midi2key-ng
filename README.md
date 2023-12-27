@@ -57,7 +57,8 @@ The repository can be fetched and installed using Go.
 - add MacOS Audio Control
 
 ## For Developers
-- Install robotgo requirements
+- `sudo apt install libx11-dev xorg-dev libxtst-dev`
+- `sudo apt-get install libasound2-dev`
 
 ## Credits
 
