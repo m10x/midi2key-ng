@@ -12,10 +12,7 @@ const (
 
 func dataToString() string {
 	strArr := ""
-	for i, d := range data {
-		if i == 0 { // skip first row which is the header row
-			continue
-		}
+	for _, d := range data {
 		for ii, dd := range d {
 			if ii > 0 {
 				strArr += PREF_LIMIT_FIRST
