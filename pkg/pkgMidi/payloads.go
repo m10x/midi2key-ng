@@ -3,6 +3,8 @@ package pkgMidi
 import (
 	"fmt"
 	"log"
+	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -13,9 +15,44 @@ import (
 	"gitlab.com/gomidi/midi/v2"
 )
 
+var wayland bool
+var checkOnce bool
+
+func checkWayland() {
+	// check if wayland is used, check only once
+	if !checkOnce && runtime.GOOS == "linux" {
+		value, exists := os.LookupEnv("XDG_SESSION_TYPE")
+		if exists {
+			if value == "wayland" {
+				wayland = true
+				log.Println("Detected Wayland")
+			}
+		} else {
+			log.Println("XDG_SESSION_TYPE env does not exist")
+		}
+	}
+	checkOnce = true
+}
+
+func keyTap(payload string) {
+	if wayland {
+	} else {
+		payloadArr := strings.SplitN(payload, ",", 2)
+		if len(payloadArr) == 1 {
+			robotgo.KeyTap(payloadArr[0])
+		} else if len(payloadArr) > 1 {
+			robotgo.KeyTap(payloadArr[0], strings.Split(payloadArr[1], ","))
+		} else {
+			log.Printf("%s is no valid Keypress command\n", payload)
+		}
+	}
+}
+
 func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi.Message {
 	var ok bool
 	var curVel uint8
+
+	checkWayland()
 
 	if mapKeys[key].Key == "" {
 		log.Printf("doHotkey: Key %v isn't assigned yet\n", key)
@@ -123,16 +160,7 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 		}
 	case strings.HasPrefix(mapKeys[key].Payload, "Keypress:"):
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Keypress:"))
-		payloadArr := strings.SplitN(payload, ",", 2)
-
-		if len(payloadArr) == 1 {
-			robotgo.KeyTap(payloadArr[0])
-		} else if len(payloadArr) > 1 {
-			robotgo.KeyTap(payloadArr[0], strings.Split(payloadArr[1], ","))
-		} else {
-			log.Printf("%s is no valid Keypress command\n", mapKeys[key].Payload)
-		}
-
+		keyTap(payload)
 	case strings.HasPrefix(mapKeys[key].Payload, "Write:"):
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Write:"))
 		robotgo.TypeStr(payload)
