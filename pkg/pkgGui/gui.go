@@ -293,7 +293,7 @@ func refreshDevices() {
 }
 
 func fillMapKeys() {
-	for i := 1; i < len(data); i++ {
+	for i := 0; i < len(data); i++ {
 		var midiType string
 		switch data[i][COLUMN_KEY][:1] {
 		case pkgMidi.MIDI_BUTTON:
