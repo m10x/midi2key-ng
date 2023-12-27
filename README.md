@@ -56,6 +56,10 @@ The repository can be fetched and installed using Go.
 - add Windows Audio Control
 - add MacOS Audio Control
 
+## For Developers
+- `sudo apt install libx11-dev xorg-dev libxtst-dev`
+- `sudo apt-get install libasound2-dev`
+
 ## Credits
 
 ### Frontend Framework:  
