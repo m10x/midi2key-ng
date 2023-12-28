@@ -8,12 +8,14 @@
 
 ## About
 
-Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Developed for Linux (x11) and a Behringer X Touch Mini, but most features are also working on Windows/MacOS and with other Midi Controllers. Wayland support is in progress.
+Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Developed for Linux (x11 & wayland) and a Behringer X Touch Mini, but most features are also working on Windows/MacOS and with other Midi Controllers.
 
 ## Features
 Give your midicontroller the ability to:
 - emulate key presses or combos
+  - wayland: use e.g. ydotool console command
 - write text
+  - wayland: use e.g. ydotool console command
 - run console commands
 - control your audio (currently only for linux)
   - mute/unmute/toggle your input/output devices or even specific applications
@@ -59,6 +61,11 @@ The repository can be fetched and installed using Go.
 ## For Developers
 - `sudo apt install libx11-dev xorg-dev libxtst-dev`
 - `sudo apt-get install libasound2-dev`
+
+## For Wayland
+- currently there are no usable golang libraries to emulate e.g. keypresses on wayland. However as a workaround it's possible to use commandline tools like ydotool:
+  - https://github.com/ReimuNotMoe/ydotool/blob/master/README.md#examples
+  - follow https://github.com/ReimuNotMoe/ydotool/issues/36#issuecomment-788148567
 
 ## Credits
 

@@ -36,6 +36,9 @@ func checkWayland() {
 
 func keyTap(payload string) {
 	if wayland {
+		//usText := "Hello, Worldy! 123 $%^"
+		// does not work properly
+		//pkgCmd.ExeCmd("ydotool type '" + usText + "'")
 	} else {
 		payloadArr := strings.SplitN(payload, ",", 2)
 		if len(payloadArr) == 1 {
