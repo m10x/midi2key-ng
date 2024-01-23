@@ -2,8 +2,6 @@ module github.com/m10x/midi2key-ng
 
 go 1.21
 
-toolchain go1.21.5
-
 require (
 	fyne.io/fyne/v2 v2.4.1
 	gitlab.com/gomidi/midi/v2 v2.0.30

@@ -51,7 +51,29 @@ func keyTap(payload string) {
 	}
 }
 
-func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16) midi.Message {
+func keyDown(payload string) {
+	payloadArr := strings.SplitN(payload, ",", 2)
+	if len(payloadArr) == 1 {
+		robotgo.KeyDown(payloadArr[0])
+	} else if len(payloadArr) > 1 {
+		robotgo.KeyDown(payloadArr[0], strings.Split(payloadArr[1], ","))
+	} else {
+		log.Printf("%s is no valid Keydown command\n", payload)
+	}
+}
+
+func keyUp(payload string) {
+	payloadArr := strings.SplitN(payload, ",", 2)
+	if len(payloadArr) == 1 {
+		robotgo.KeyUp(payloadArr[0])
+	} else if len(payloadArr) > 1 {
+		robotgo.KeyUp(payloadArr[0], strings.Split(payloadArr[1], ","))
+	} else {
+		log.Printf("%s is no valid Keydown command\n", payload)
+	}
+}
+
+func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, key uint8, val uint16, keyState bool) midi.Message {
 	var ok bool
 	var curVel uint8
 
@@ -163,7 +185,20 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 		}
 	case strings.HasPrefix(mapKeys[key].Payload, "Keypress:"):
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Keypress:"))
-		keyTap(payload)
+		if mapKeys[key].Held {
+			log.Println("Held is on")
+			if keyState == true { //Is it a keydown event?
+				keyDown(payload)
+				log.Println("Keydown event")
+			} else { //If not do a keyUp instead
+				keyUp(payload)
+				log.Println("Keyup event")
+			}
+			
+		} else {
+			log.Println("Held is off")
+			keyTap(payload)
+		}
 	case strings.HasPrefix(mapKeys[key].Payload, "Write:"):
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Write:"))
 		robotgo.TypeStr(payload)
@@ -192,7 +227,7 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 	mapCurrentVelocity[key] = vel
 	switch mapKeys[key].MidiType {
 	case MIDI_BUTTON:
-		log.Printf("Simulate Noteon, ch=%d, key=%d, vel=%d\n", ch, key, vel)
+		log.Printf("Simulate Note on, ch=%d, key=%d, vel=%d\n", ch, key, vel)
 		msg = midi.NoteOn(ch, key, vel)
 		lblOutput.Text = payload
 		lblOutput.Refresh()
