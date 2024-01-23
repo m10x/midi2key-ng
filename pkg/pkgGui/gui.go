@@ -143,6 +143,7 @@ func Startup(versionTool string) {
 			btnNote.Enable()
 
 			configureCheckSpecial(strSpecialDisabled)
+			configureCheckHeld("")
 			if len(btnNote.Text) < 6 {
 				switch btnNote.Text[:1] {
 				case pkgMidi.MIDI_BUTTON:
@@ -297,7 +298,7 @@ func configureCheckSpecial(strSpecialDisabled string) {
 	}
 }
 func configureCheckHeld(payloadText string) {
-	if len(btnNote.Text) > 6 || !strings.HasPrefix(payloadText, "Keypress:")  {
+	if len(btnNote.Text) > 6 || (payloadText != "" && strings.HasPrefix(payloadText, "Keypress:")) || btnNote.Text[0] != 'B' {
 		checkHeld.Disable()
 		checkHeld.Text = "(disabled) Held"
 		checkHeld.Refresh()
