@@ -241,7 +241,7 @@ func Startup(versionTool string) {
 		entryDescription.Text = data[rowToEdit][COLUMN_DESCRIPTION]
 		entryVelocity.Text = data[rowToEdit][COLUMN_VELOCITY]
 		checkSpecial.Checked = data[rowToEdit][COLUMN_SPECIAL] == "true"
-
+		checkHeld.Checked = data[rowToEdit][COLUMN_HELD] == "true"
 		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblPayload, container.NewVBox(comboPayload, entryPayload), lblDescription, entryDescription, lblVelocity, entryVelocity, lblToggle, checkSpecial, lblHeld, checkHeld), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
 		popupEdit.Resize(fyne.NewSize(400, 200))
 		popupEdit.Show()
