@@ -56,7 +56,11 @@ func keyDown(payload string) {
 	if len(payloadArr) == 1 {
 		robotgo.KeyDown(payloadArr[0])
 	} else if len(payloadArr) > 1 {
-		robotgo.KeyDown(payloadArr[0], strings.Split(payloadArr[1], ","))
+		for i, _ := range payloadArr {
+			robotgo.KeyDown(payloadArr[i])
+			log.Println(payloadArr[i] + " down")
+		}
+		
 	} else {
 		log.Printf("%s is no valid Keydown command\n", payload)
 	}
@@ -67,7 +71,10 @@ func keyUp(payload string) {
 	if len(payloadArr) == 1 {
 		robotgo.KeyUp(payloadArr[0])
 	} else if len(payloadArr) > 1 {
-		robotgo.KeyUp(payloadArr[0], strings.Split(payloadArr[1], ","))
+		for i, _ := range payloadArr {
+			robotgo.KeyUp(payloadArr[i])
+			log.Println(payloadArr[i] + " up")
+		}
 	} else {
 		log.Printf("%s is no valid Keydown command\n", payload)
 	}
@@ -189,15 +196,15 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 			log.Println("Held is on")
 			if keyState == true { //Is it a keydown event?
 				keyDown(payload)
-				log.Println("Keydown event")
 			} else { //If not do a keyUp instead
-				keyUp(payload)
-				log.Println("Keyup event")
+				keyUp(payload)	
 			}
 			
 		} else {
 			log.Println("Held is off")
-			keyTap(payload)
+			if keyState == true {
+				keyTap(payload)
+			}
 		}
 	case strings.HasPrefix(mapKeys[key].Payload, "Write:"):
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Write:"))
