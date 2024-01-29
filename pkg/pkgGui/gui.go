@@ -298,7 +298,8 @@ func configureCheckSpecial(strSpecialDisabled string) {
 	}
 }
 func configureCheckHeld(payloadText string) {
-	if len(btnNote.Text) > 6 || (payloadText != "" && strings.HasPrefix(payloadText, "Keypress:")) || btnNote.Text[0] != 'B' {
+	log.Println(payloadText)
+	if (payloadText != "" && !strings.Contains(payloadText, "Keypress")) || btnNote.Text[0] != 'B' {
 		checkHeld.Disable()
 		checkHeld.Text = "(disabled) Held"
 		checkHeld.Refresh()
