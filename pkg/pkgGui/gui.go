@@ -23,7 +23,7 @@ const (
 	COLUMN_VELOCITY    = 3
 	COLUMN_SPECIAL     = 4
 	COLUMN_HELD        = 5
-	COLUMN_COUNT = 6
+	COLUMN_COUNT       = 6
 )
 
 var (
@@ -102,12 +102,12 @@ func Startup(versionTool string) {
 	}
 
 	table.SetColumnWidth(0, 39)
-	table.SetColumnWidth(1, 480)
+	table.SetColumnWidth(1, 435)
 	table.SetColumnWidth(2, 335)
 	table.SetColumnWidth(3, 70)
 	table.SetColumnWidth(4, 60)
-	table.SetColumnWidth(5, 60)
-	
+	table.SetColumnWidth(5, 45)
+
 	table.CreateHeader = headerCreate
 	table.UpdateHeader = headerUpdate
 
@@ -204,7 +204,7 @@ func Startup(versionTool string) {
 		entryVelocity = widget.NewEntry()
 		lblToggle := widget.NewLabel("Special:")
 		checkSpecial = widget.NewCheck(strSpecialDisabled, nil)
-		lblHeld:= widget.NewLabel("Held:")
+		lblHeld := widget.NewLabel("Held:")
 		checkHeld = widget.NewCheck("Held", nil)
 		if btnNote.Text == strNoButton {
 			checkSpecial.Disable()
@@ -221,7 +221,7 @@ func Startup(versionTool string) {
 			} else {
 				data[rowToEdit][COLUMN_SPECIAL] = "false"
 			}
-			if  checkHeld.Checked {
+			if checkHeld.Checked {
 				data[rowToEdit][COLUMN_HELD] = "true"
 			} else {
 				data[rowToEdit][COLUMN_HELD] = "false"
@@ -298,8 +298,7 @@ func configureCheckSpecial(strSpecialDisabled string) {
 	}
 }
 func configureCheckHeld(payloadText string) {
-	log.Println(payloadText)
-	if (payloadText != "" && !strings.Contains(payloadText, "Keypress")) || btnNote.Text[0] != 'B' {
+	if len(btnNote.Text) > 6 || (payloadText != "" && strings.HasPrefix(payloadText, "Keypress:")) || btnNote.Text[0] != 'B' {
 		checkHeld.Disable()
 		checkHeld.Text = "(disabled) Held"
 		checkHeld.Refresh()
