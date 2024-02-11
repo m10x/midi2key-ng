@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+
 	"fyne.io/fyne/v2/widget"
 	"gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
@@ -33,6 +34,7 @@ type KeyStruct struct {
 	Payload  string
 	Velocity uint16
 	Special  bool
+	Held     bool
 }
 
 func GetInputPorts() []string {
@@ -188,7 +190,7 @@ func StartListen(table *widget.Table, lblOutput *widget.Label, data [][]string, 
 		case msg.GetNoteStart(&ch, &key, &vel):
 			log.Printf("starting note %s (int: %v) on channel %v with velocity %v\n", midi.Note(key), key, ch, vel)
 			selectCell(table, data, key)
-			msg = doHotkey(lblOutput, mapKeys, ch, key, uint16(vel))
+			msg = doHotkey(lblOutput, mapKeys, ch, key, uint16(vel), true)
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
@@ -208,11 +210,17 @@ func StartListen(table *widget.Table, lblOutput *widget.Label, data [][]string, 
 				}(ch, key)
 			}
 		case msg.GetNoteEnd(&ch, &key):
-			//log.Printf("ending note %s (int:%v) on channel %v\n", midi.Note(key), key, ch)
+			msg = doHotkey(lblOutput, mapKeys, ch, key, uint16(vel), false)
+			if msg != nil {
+				err := send(msg)
+				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
+					log.Printf("ERROR send: %s\n", err)
+				}
+			}
 		case msg.GetControlChange(&ch, &cc, &val):
 			log.Printf("control change %v %q channel: %v value: %v\n", cc, midi.ControlChangeName[cc], ch, val)
 			selectCell(table, data, cc)                             // use cc instead of key as reference
-			msg = doHotkey(lblOutput, mapKeys, ch, cc, uint16(val)) // use cc instead of key as reference
+			msg = doHotkey(lblOutput, mapKeys, ch, cc, uint16(val), false) // use cc instead of key as reference
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {
@@ -222,7 +230,7 @@ func StartListen(table *widget.Table, lblOutput *widget.Label, data [][]string, 
 		case msg.GetPitchBend(&ch, &rel, &abs):
 			log.Printf("pitch bend on channel %v: value: %v (rel) %v (abs)\n", ch, rel, abs)
 			selectCell(table, data, ch)                     // use ch instead of key as reference
-			msg = doHotkey(lblOutput, mapKeys, ch, ch, abs) // use ch instead of key as reference
+			msg = doHotkey(lblOutput, mapKeys, ch, ch, abs, false) // use ch instead of key as reference
 			if msg != nil {
 				err := send(msg)
 				if err != nil && !strings.Contains(err.Error(), errMidiInAlsa) {

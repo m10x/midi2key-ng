@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/m10x/midi2key-ng/pkg/pkgGui"
+	"log"
 )
 
 const (
@@ -9,5 +10,6 @@ const (
 )
 
 func main() {
+	log.Println("Hello world!")
 	pkgGui.Startup(VERSION_TOOL)
 }

@@ -3,6 +3,7 @@ package pkgGui
 import (
 	"log"
 	"strconv"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -21,8 +22,8 @@ const (
 	COLUMN_DESCRIPTION = 2
 	COLUMN_VELOCITY    = 3
 	COLUMN_SPECIAL     = 4
-
-	COLUMN_COUNT = 5
+	COLUMN_HELD        = 5
+	COLUMN_COUNT = 6
 )
 
 var (
@@ -42,6 +43,7 @@ var (
 	btnEditRow     *widget.Button
 	lblOutput      *widget.Label
 	checkSpecial   *widget.Check
+	checkHeld      *widget.Check
 	entryVelocity  *widget.Entry
 	selectedCell   widget.TableCellID
 	popupPayload   *widget.PopUp
@@ -104,12 +106,13 @@ func Startup(versionTool string) {
 	table.SetColumnWidth(2, 335)
 	table.SetColumnWidth(3, 70)
 	table.SetColumnWidth(4, 60)
-
+	table.SetColumnWidth(5, 60)
+	
 	table.CreateHeader = headerCreate
 	table.UpdateHeader = headerUpdate
 
 	btnAddRow = widget.NewButton("Add Row", func() {
-		data = append(data, []string{"-", "-", "-", "0", "false"})
+		data = append(data, []string{"-", "-", "-", "0", "false", "false"})
 		table.Refresh()
 		setPreferences(versionTool)
 	})
@@ -140,6 +143,7 @@ func Startup(versionTool string) {
 			btnNote.Enable()
 
 			configureCheckSpecial(strSpecialDisabled)
+			configureCheckHeld("")
 			if len(btnNote.Text) < 6 {
 				switch btnNote.Text[:1] {
 				case pkgMidi.MIDI_BUTTON:
@@ -193,13 +197,18 @@ func Startup(versionTool string) {
 				popupPayload = widget.NewModalPopUp(container.NewVBox(comboDevice, comboSound, container.NewHBox(btnSavePayload, btnCancelPayload)), popupEdit.Canvas)
 				popupPayload.Show()
 			}
+			log.Println(entryPayload.Text)
+			configureCheckHeld(entryPayload.Text)
 		})
 		lblVelocity := widget.NewLabel("Velocity:")
 		entryVelocity = widget.NewEntry()
 		lblToggle := widget.NewLabel("Special:")
 		checkSpecial = widget.NewCheck(strSpecialDisabled, nil)
+		lblHeld:= widget.NewLabel("Held:")
+		checkHeld = widget.NewCheck("Held", nil)
 		if btnNote.Text == strNoButton {
 			checkSpecial.Disable()
+			checkHeld.Disable()
 		}
 
 		btnSave := widget.NewButton("Save", func() {
@@ -212,6 +221,11 @@ func Startup(versionTool string) {
 			} else {
 				data[rowToEdit][COLUMN_SPECIAL] = "false"
 			}
+			if  checkHeld.Checked {
+				data[rowToEdit][COLUMN_HELD] = "true"
+			} else {
+				data[rowToEdit][COLUMN_HELD] = "false"
+			}
 			table.Refresh()
 			setPreferences(versionTool)
 			popupEdit.Hide()
@@ -222,12 +236,13 @@ func Startup(versionTool string) {
 
 		btnNote.Text = data[rowToEdit][COLUMN_KEY]
 		configureCheckSpecial(strSpecialDisabled)
+		configureCheckHeld(entryPayload.Text)
 		entryPayload.Text = data[rowToEdit][COLUMN_PAYLOAD]
 		entryDescription.Text = data[rowToEdit][COLUMN_DESCRIPTION]
 		entryVelocity.Text = data[rowToEdit][COLUMN_VELOCITY]
 		checkSpecial.Checked = data[rowToEdit][COLUMN_SPECIAL] == "true"
-
-		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblPayload, container.NewVBox(comboPayload, entryPayload), lblDescription, entryDescription, lblVelocity, entryVelocity, lblToggle, checkSpecial), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
+		checkHeld.Checked = data[rowToEdit][COLUMN_HELD] == "true"
+		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblPayload, container.NewVBox(comboPayload, entryPayload), lblDescription, entryDescription, lblVelocity, entryVelocity, lblToggle, checkSpecial, lblHeld, checkHeld), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
 		popupEdit.Resize(fyne.NewSize(400, 200))
 		popupEdit.Show()
 	})
@@ -282,6 +297,18 @@ func configureCheckSpecial(strSpecialDisabled string) {
 		checkSpecial.Refresh()
 	}
 }
+func configureCheckHeld(payloadText string) {
+	log.Println(payloadText)
+	if (payloadText != "" && !strings.Contains(payloadText, "Keypress")) || btnNote.Text[0] != 'B' {
+		checkHeld.Disable()
+		checkHeld.Text = "(disabled) Held"
+		checkHeld.Refresh()
+	} else {
+		checkHeld.Enable()
+		checkHeld.Text = "Held"
+		checkHeld.Refresh()
+	}
+}
 
 func refreshDevices() {
 	devices := pkgMidi.GetInputPorts()
@@ -324,6 +351,7 @@ func fillMapKeys() {
 			Payload:  data[i][COLUMN_PAYLOAD],
 			Velocity: uint16(vel),
 			Special:  data[i][COLUMN_SPECIAL] == "true",
+			Held:     data[i][COLUMN_HELD] == "true",
 		}
 	}
 }
@@ -385,6 +413,8 @@ func headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 		header.SetText("Velocity")
 	case 4:
 		header.SetText("Special")
+	case 5:
+		header.SetText("Held")
 	}
 
 	// header.OnTapped = func() {
