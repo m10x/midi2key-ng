@@ -2,6 +2,7 @@ package pkgCmd
 
 import (
 	"log"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -33,7 +34,14 @@ func ExeCmd(cmd string) (string, error) {
 	head := parts[0]
 	parts = parts[1:]
 
-	out, err := exec.Command(head, parts...).Output()
+	// Create the command
+	command := exec.Command(head, parts...)
+
+	// Set LC_ALL to enforce English output
+	command.Env = append(os.Environ(), "LC_ALL=C")
+
+	// Execute the command and capture output
+	out, err := command.Output()
 	if err != nil {
 		return "", err
 	}
