@@ -60,7 +60,7 @@ func keyDown(payload string) {
 			robotgo.KeyDown(payloadArr[i])
 			log.Println(payloadArr[i] + " down")
 		}
-		
+
 	} else {
 		log.Printf("%s is no valid Keydown command\n", payload)
 	}
@@ -97,11 +97,28 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 	}
 
 	var newVolume, device, payload string
+	log.Println("Payload: " + mapKeys[key].Payload)
 	switch {
 	case strings.HasPrefix(mapKeys[key].Payload, "Audio:"):
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Audio:"))
 		payloadArr := strings.SplitN(payload, ":", 3)
 		device = strings.TrimSpace(payloadArr[0] + ":" + payloadArr[1])
+		if device == "App: Focused Application" {
+			log.Println("Checking the Focused Application")
+			focusedWindowPID, err := pkgCmd.GetFocusedWindowPID()
+			if err != nil {
+				log.Println("Error getting the focused window PID:" + err.Error())
+				return nil
+			}
+			log.Println("The Focused Application's PID is " + focusedWindowPID)
+			focusedWindowAudioSink, err := pkgCmd.GetPulseAudioSinkDescriptionByPID(focusedWindowPID)
+			if err != nil {
+				log.Println("Error getting the audio sink of the focused window:" + err.Error())
+				return nil
+			}
+			device = "App: " + focusedWindowAudioSink
+		}
+		log.Println("Device: " + device)
 		action := strings.TrimSpace(payloadArr[2])
 
 		if mapKeys[key].MidiType == MIDI_KNOB && mapKeys[key].Special && val > uint16(mapKeys[key].Velocity) {
@@ -197,9 +214,9 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 			if keyState == true { //Is it a keydown event?
 				keyDown(payload)
 			} else { //If not do a keyUp instead
-				keyUp(payload)	
+				keyUp(payload)
 			}
-			
+
 		} else {
 			log.Println("Held is off")
 			if keyState == true {

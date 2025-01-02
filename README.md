@@ -66,6 +66,7 @@ The repository can be fetched and installed using Go.
 - currently there are no usable golang libraries to emulate e.g. keypresses on wayland. However as a workaround it's possible to use commandline tools like ydotool:
   - https://github.com/ReimuNotMoe/ydotool/blob/master/README.md#examples
   - follow https://github.com/ReimuNotMoe/ydotool/issues/36#issuecomment-788148567
+  - Gnome Use: https://github.com/hseliger/window-calls-extended
 
 ## Credits
 

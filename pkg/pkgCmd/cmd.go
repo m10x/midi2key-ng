@@ -1,6 +1,7 @@
 package pkgCmd
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -47,6 +48,77 @@ func ExeCmd(cmd string) (string, error) {
 	}
 
 	return string(out), nil
+}
+
+// GetFocusedWindowPID retrieves the PID of the currently focused window using gdbus.
+func GetFocusedWindowPID() (string, error) {
+	cmd := `gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusPID`
+	output, err := ExeCmd(cmd)
+	if err != nil {
+		return "", err
+	}
+
+	// Extract the window PID from the gdbus output
+	pid := pkgUtils.GetStringInBetween(output, `('`, `',)`)
+	return pid, nil
+}
+
+func GetPulseAudioSinkDescriptionByPID(pid string) (string, error) {
+	cmd := `pactl list sink-inputs`
+	output, err := ExeCmd(cmd)
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(output, "\n")
+	var description string
+	var foundPID bool
+	var startOfProperties int
+
+	// First, find the line with the application.process.id (PID)
+	for i, line := range lines {
+		// When we find a line containing the matching PID (note that the PID is in quotes)
+		if strings.Contains(line, "application.process.id") && strings.Contains(line, fmt.Sprintf("\"%s\"", pid)) {
+			// Flag that we've found the PID
+			foundPID = true
+			// Now, we need to go upwards to the "Properties:" section
+			for j := i; j >= 0; j-- {
+				if strings.Contains(lines[j], "Properties:") {
+					startOfProperties = j
+					break
+				}
+			}
+			break
+		}
+	}
+
+	// If no PID was found, return an error
+	if !foundPID {
+		return "", fmt.Errorf("no PulseAudio sink description found for PID '%s'", pid)
+	}
+
+	// Now, go down from "Properties:" to find the application.name
+	for i := startOfProperties; i < len(lines); i++ {
+		if strings.Contains(lines[i], "application.name") {
+			// Ensure the line contains '=' before attempting to split
+			if strings.Contains(lines[i], "=") {
+				// Extract the application name (description)
+				parts := strings.SplitN(lines[i], "=", 2)
+				if len(parts) > 1 {
+					// Strip quotes and whitespace from the description
+					description = strings.Trim(strings.TrimSpace(parts[1]), "\"")
+					break
+				}
+			}
+		}
+	}
+
+	// If no description was found, return an error
+	if description == "" {
+		return "", fmt.Errorf("no application.name found for PID '%s'", pid)
+	}
+
+	return description, nil
 }
 
 func GetSinks() []ApplicationSinkStruct {

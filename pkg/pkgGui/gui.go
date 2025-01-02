@@ -174,7 +174,7 @@ func Startup(versionTool string) {
 				entryPayload.Text = "Write: example"
 				entryPayload.Refresh()
 			} else if comboPayload.SelectedIndex() == 3 {
-				devices := []string{}
+				devices := []string{"App: Focused Application"}
 				for _, sink := range pkgCmd.GetSinks() {
 					devices = append(devices, sink.Description)
 				}
