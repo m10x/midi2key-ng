@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/m10x/midi2key-ng/pkg/pkgGui"
 	"log"
+
+	"github.com/m10x/midi2key-ng/pkg/pkgGui"
 )
 
 const (
-	VERSION_TOOL = "v1.1.1"
+	VERSION_TOOL = "v1.2.0"
 )
 
 func main() {
