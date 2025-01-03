@@ -8,18 +8,18 @@
 
 ## About
 
-Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Developed for Linux (x11 & wayland) and a Behringer X Touch Mini, but most features are also working on Windows/MacOS and with other Midi Controllers.
+Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Developed for Linux (x11 & wayland) and a Behringer X Touch Mini.
 
 ## Features
 Give your midicontroller the ability to:
-- emulate key presses or combos
-  - wayland: use e.g. ydotool console command
+- emulate key presses, mouse clicks/movements
+  - Look [here](https://git.sr.ht/~geb/dotool/tree/master/doc/dotool.1.scd#L62) for possible input emulations
 - write text
-  - wayland: use e.g. ydotool console command
 - run console commands
-- control your audio (currently only for linux)
-  - mute/unmute/toggle your input/output devices, specific applications or the focused window
-  - increase/decrease/set volume of your input/output devices, specific applications or the focused window
+- control your audio
+  - input/output devices, applications, focused application
+  - increase/decrease/set volume
+  - mute/unmute/toggle
 
 ## Screenshots
 Overview of Assignments
@@ -33,10 +33,10 @@ Edit an Assignment
 
 ## How to Install
 
-### Option 1: Download precompiled binary (Linux, Windows, MacOS)
+### Option 1: Download precompiled binary
 Download a precompiled binary from the [latest Release](https://github.com/m10x/midi2key-ng/releases).  
 
-### Option 2: Fetch using go (Linux, Windows, MacOS)
+### Option 2: Fetch using go
 The repository can be fetched and installed using Go.  
 `go install -v github.com/m10x/midi2key-ng@latest`  
   
@@ -52,8 +52,6 @@ The repository can be fetched and installed using Go.
 - export / import Key Mapping
 - improve design, layout etc.
 - test other midi controllers
-- add Windows Audio Control
-- add MacOS Audio Control
 
 ## For Developers
 - `sudo apt install libx11-dev xorg-dev libxtst-dev`
@@ -69,6 +67,7 @@ The repository can be fetched and installed using Go.
     - `sudo apt install scdoc`
     - `cd dotool && ./build.sh && sudo ./build.sh install`
     - `sudo udevadm control --reload && sudo udevadm trigger`
+    - See https://git.sr.ht/~geb/dotool/tree/master/doc/dotool.1.scd#L62 for possible input simulations
 
 ## Credits
 
@@ -79,8 +78,4 @@ https://fyne.io/
 ### MIDI Library:
 **gomidi**  
 https://gitlab.com/gomidi/midi/ 
-https://pkg.go.dev/gitlab.com/gomidi/midi/v2  
-
-### Simulate Keyboard + Mouse
-**robot-go**
-https://github.com/go-vgo/robotgo
+https://pkg.go.dev/gitlab.com/gomidi/midi/v2

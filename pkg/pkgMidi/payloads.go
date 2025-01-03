@@ -144,7 +144,6 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Write:"))
 		payload = strings.ReplaceAll(payload, "'", "'\\''")
 		pkgCmd.ExeCmd(`echo type '` + payload + `' | dotoolc`)
-		//REMOVE robotgo.TypeStr(payload)
 	default:
 		payload = mapKeys[key].Payload
 		stdout, err := pkgCmd.ExeCmd(payload)
