@@ -268,7 +268,7 @@ func Startup(versionTool string) {
 		desk.SetSystemTrayMenu(menuTray)
 		desk.SetSystemTrayIcon(resourceMidiOffPng)
 	} else {
-		log.Print("Can't create TrayMenu")
+		log.Println("Can't create TrayMenu")
 	}
 
 	getPreferences(versionTool)

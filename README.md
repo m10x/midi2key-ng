@@ -18,8 +18,8 @@ Give your midicontroller the ability to:
   - wayland: use e.g. ydotool console command
 - run console commands
 - control your audio (currently only for linux)
-  - mute/unmute/toggle your input/output devices or even specific applications
-  - increase/decrease/set volume of your input/output devices or even specific applications
+  - mute/unmute/toggle your input/output devices, specific applications or the focused window
+  - increase/decrease/set volume of your input/output devices, specific applications or the focused window
 
 ## Screenshots
 Overview of Assignments
@@ -64,6 +64,11 @@ The repository can be fetched and installed using Go.
   - https://github.com/ReimuNotMoe/ydotool/blob/master/README.md#examples
   - follow https://github.com/ReimuNotMoe/ydotool/issues/36#issuecomment-788148567
   - Gnome Use: https://github.com/hseliger/window-calls-extended
+  - DoTool https://sr.ht/~geb/dotool/
+    - `git clone https://git.sr.ht/\~geb/dotool` 
+    - `sudo apt install scdoc`
+    - `cd dotool && ./build.sh && sudo ./build.sh install`
+    - `sudo udevadm control --reload && sudo udevadm trigger`
 
 ## Credits
 

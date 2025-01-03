@@ -50,6 +50,50 @@ func ExeCmd(cmd string) (string, error) {
 	return string(out), nil
 }
 
+// StartProgramInBackground starts a program in the background using nohup.
+func StartProgramInBackground(program string, args []string) error {
+	// Combine the program and arguments into a single command
+	cmd := exec.Command("nohup", append([]string{program}, args...)...)
+
+	// Redirect stdout and stderr to a log file to avoid terminal dependency
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+
+	// Detach the process (let it run in the background)
+	err := cmd.Start()
+	if err != nil {
+		return fmt.Errorf("failed to start %s: %w", program, err)
+	}
+
+	// Program started successfully
+	log.Printf("Started %s in the background with PID %d\n", program, cmd.Process.Pid)
+	return nil
+}
+
+func IsProgramRunning(programName string) (bool, error) {
+	// Use pgrep to check if the program is running
+	cmd := fmt.Sprintf("pgrep -x %s", programName)
+	output, err := ExeCmd(cmd)
+
+	// If pgrep finds no match, it returns an error with no output
+	if err != nil {
+		// Check if the error is because no processes were found
+		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 1 {
+			// No process with the given name was found
+			return false, nil
+		}
+		// If there's a different error, return it
+		return false, err
+	}
+
+	// If there's output, the program is running
+	if output != "" {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // GetFocusedWindowPID retrieves the PID of the currently focused window using gdbus.
 func GetFocusedWindowPID() (string, error) {
 	cmd := `gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusPID`

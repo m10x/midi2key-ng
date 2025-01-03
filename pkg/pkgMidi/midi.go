@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2/widget"
+	"github.com/m10x/midi2key-ng/pkg/pkgCmd"
 	"gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
 
@@ -130,6 +131,17 @@ func selectCell(table *widget.Table, data [][]string, pressedKey uint8) {
 }
 
 func StartListen(table *widget.Table, lblOutput *widget.Label, data [][]string, device string, mapKeys map[uint8]KeyStruct) string {
+
+	dotoold, err := pkgCmd.IsProgramRunning("dotoold")
+	if err != nil {
+		log.Println("Error checking if dotoold is running: " + err.Error())
+	}
+	if dotoold {
+		log.Println("dotoold is already running")
+	} else {
+		log.Println("dotoold is not running. Starting it in the background.")
+		pkgCmd.StartProgramInBackground("dotoold", nil)
+	}
 
 	// prepare to listen ---------
 	inPort := device
