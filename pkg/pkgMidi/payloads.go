@@ -225,7 +225,9 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 		}
 	case strings.HasPrefix(mapKeys[key].Payload, "Write:"):
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Write:"))
-		robotgo.TypeStr(payload)
+		payload = strings.ReplaceAll(payload, "'", "'\\''")
+		pkgCmd.ExeCmd(`echo type '` + payload + `' | dotoolc`)
+		//REMOVE robotgo.TypeStr(payload)
 	default:
 		payload = mapKeys[key].Payload
 		stdout, err := pkgCmd.ExeCmd(payload)

@@ -30,13 +30,9 @@ type ApplicationSinkStruct struct {
 // https://stackoverflow.com/a/20438245
 func ExeCmd(cmd string) (string, error) {
 	log.Printf("command is %s\n", cmd)
-	// splitting head => g++ parts => rest of the command
-	parts := strings.Fields(cmd)
-	head := parts[0]
-	parts = parts[1:]
 
 	// Create the command
-	command := exec.Command(head, parts...)
+	command := exec.Command("sh", "-c", cmd)
 
 	// Set LC_ALL to enforce English output
 	command.Env = append(os.Environ(), "LC_ALL=C")
@@ -50,12 +46,16 @@ func ExeCmd(cmd string) (string, error) {
 	return string(out), nil
 }
 
-// StartProgramInBackground starts a program in the background using nohup.
-func StartProgramInBackground(program string, args []string) error {
+// StartProgramInBackground starts a program in the background using nohup with optional environment variables.
+func StartProgramInBackground(program string, args []string, envVars []string) error {
 	// Combine the program and arguments into a single command
 	cmd := exec.Command("nohup", append([]string{program}, args...)...)
 
-	// Redirect stdout and stderr to a log file to avoid terminal dependency
+	// Set environment variables
+	cmd.Env = append(os.Environ(), "LC_ALL=C") // Set LC_ALL for consistent behavior
+	cmd.Env = append(cmd.Env, envVars...)
+
+	// Redirect stdout and stderr to avoid terminal dependency
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 
