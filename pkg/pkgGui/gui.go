@@ -165,10 +165,10 @@ func Startup(versionTool string) {
 		comboPayload = widget.NewSelect([]string{"Command Line Command", "Keypress (combo)", "Write String", "Audio Control"}, func(value string) {
 			// TODO: Add Popup to speficy the wanted Payload. Eg. if Audio Control: Popup to choose if Mute, Volume Up, Volume Down
 			if comboPayload.SelectedIndex() == 0 {
-				entryPayload.Text = "Replace with Command"
+				entryPayload.Text = "echo type 'example' | dotoolc"
 				entryPayload.Refresh()
 			} else if comboPayload.SelectedIndex() == 1 {
-				entryPayload.Text = "Keypress: a,ctrl,alt,cmd"
+				entryPayload.Text = "Keypress: ctrl+shift+a super+alt+altgr+1"
 				entryPayload.Refresh()
 			} else if comboPayload.SelectedIndex() == 2 {
 				entryPayload.Text = "Write: example"
