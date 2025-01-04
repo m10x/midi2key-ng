@@ -139,7 +139,15 @@ func Startup(versionTool string) {
 		btnNote = widget.NewButton(strNoButton, func() {
 			btnNote.Text = "Listening for Input..."
 			btnNote.Disable()
-			btnNote.Text = pkgMidi.GetOneInput(comboSelect.Selected)
+			newInput := pkgMidi.GetOneInput(comboSelect.Selected)
+			// Check if input was already assigned
+			for row := range data {
+				if data[row][COLUMN_KEY] == newInput && newInput != "Nothing received" {
+					btnNote.Text = "Input is already assigned"
+					break
+				}
+				btnNote.Text = newInput
+			}
 			btnNote.Enable()
 
 			configureCheckSpecial(strSpecialDisabled)

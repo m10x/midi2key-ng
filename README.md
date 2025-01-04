@@ -42,6 +42,7 @@ Give your midicontroller the ability to:
 - run console commands
 - soundboard
   - play audio files (e.g. wav, flac, ogg) as microphone input
+  - new source soundboard_mic combines the default microphone with a new audio sink soundboard_router by utilizing pactl
   - run `paplay --list-file-formats` to list all available formats
 - control your audio
   - input/output devices, applications, focused application (Currently only Gnome)
@@ -76,14 +77,15 @@ The repository can be fetched and installed using Go.
 - Install Gnome Extension [Window Calls Extended](https://github.com/hseliger/window-calls-extended) to control audio of focused application
   
 ## Roadmap
-- spam actions if key keeps getting pressed
-- warn if key is already assigend
+- soundfile picker
+- sort table
+- spam actions if key keeps getting pressed (hold)
 - reorder rows
 - multiple profiles
 - hotkeys to start/stop listening
-- implement soundboard functionality using [beep](https://github.com/faiface/beep)
 - add optional textbox with log output
 - add code comments
+- create default Key Mapping for Behringer X Touch Mini with an easy option to add more defaults
 - export / import Key Mapping
 - improve design, layout etc.
 - test other midi controllers
