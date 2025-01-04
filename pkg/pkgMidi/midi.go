@@ -9,7 +9,6 @@ import (
 
 	"fyne.io/fyne/v2/widget"
 	"github.com/m10x/midi2key-ng/pkg/pkgCmd"
-	"github.com/m10x/midi2key-ng/pkg/pkgUtils"
 	"gitlab.com/gomidi/midi/v2"
 	"gitlab.com/gomidi/midi/v2/drivers"
 
@@ -133,24 +132,7 @@ func selectCell(table *widget.Table, data [][]string, pressedKey uint8) {
 
 func StartListen(table *widget.Table, lblOutput *widget.Label, data [][]string, device string, mapKeys map[uint8]KeyStruct) string {
 
-	dotoold, err := pkgCmd.IsProgramRunning("dotoold")
-	if err != nil {
-		log.Println("Error checking if dotoold is running: " + err.Error())
-	}
-	if dotoold {
-		log.Println("dotoold is already running")
-	} else {
-		log.Println("dotoold is not running. Starting it in the background.")
-		output, err := pkgCmd.ExeCmd("cat /etc/default/keyboard")
-		keyboardLayout := "us"
-		if err != nil {
-			log.Println("Error reading keyboard layout, defaulting to 'us'")
-		} else {
-			keyboardLayout = pkgUtils.GetStringInBetween(output, `XKBLAYOUT="`, `"`)
-			log.Println("Detected keyboard layout " + keyboardLayout)
-		}
-		pkgCmd.StartProgramInBackground("dotoold", []string{}, []string{"DOTOOL_XKB_LAYOUT=" + keyboardLayout})
-	}
+	pkgCmd.Prepare()
 
 	// prepare to listen ---------
 	inPort := device

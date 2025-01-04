@@ -27,6 +27,78 @@ type ApplicationSinkStruct struct {
 	devType int  // Sink, Source or Sinkinput? Ist das nötig? Hole es aktuell aus dem String
 }
 
+func Prepare() {
+	log.Println("Initiating preparations")
+	// dotool
+	dotoold, err := IsProgramRunning("dotoold")
+	if err != nil {
+		log.Println("Error checking if dotoold is running: " + err.Error())
+	}
+	if dotoold {
+		log.Println("dotoold is already running")
+	} else {
+		log.Println("dotoold is not running. Starting it in the background.")
+		output, err := ExeCmd("cat /etc/default/keyboard")
+		keyboardLayout := "us"
+		if err != nil {
+			log.Println("Error reading keyboard layout, defaulting to 'us': " + err.Error())
+		} else {
+			keyboardLayout = pkgUtils.GetStringInBetween(output, `XKBLAYOUT="`, `"`)
+			log.Println("Detected keyboard layout " + keyboardLayout)
+		}
+		err = ExeCmdBackground("dotoold", []string{}, []string{"DOTOOL_XKB_LAYOUT=" + keyboardLayout})
+		if err != nil {
+			log.Println("Error starting dotoold: " + err.Error())
+		} else {
+			log.Println("Started dotoold")
+		}
+	}
+
+	// pactl
+	output, err := ExeCmd("pactl list sources")
+	if err != nil {
+		log.Println("Error listing audio sources: " + err.Error())
+	}
+	if strings.Contains(output, "Name: soundboard_mic") {
+		log.Println("soundboard_mic is already available")
+	} else {
+		log.Println("soundboard_mic is not available yet. Creating it with the default audio source and sink.")
+		defaultSource, err := ExeCmd("pactl get-default-source")
+		if err != nil {
+			log.Println("Error getting default audio source: " + err.Error())
+		}
+		log.Println("The default source is " + defaultSource)
+		defaultSink, err := ExeCmd("pactl get-default-sink")
+		if err != nil {
+			log.Println("Error getting default audio sink: " + err.Error())
+		}
+		log.Println("The default sink is " + defaultSink)
+		// Create new sink
+		_, err = ExeCmd("pactl load-module module-null-sink sink_name=soundboard_mix sink_properties=device.description=SoundboardMix")
+		if err != nil {
+			log.Println("Error creating new sink: " + err.Error())
+		}
+		// Combine new sink with default sink
+		_, err = ExeCmd(`pactl load-module module-combine-sink sink_name=soundboard_router slaves=` + defaultSink + `,soundboard_mix sink_properties=device.description="SoundboardRouter"`)
+		if err != nil {
+			log.Println("Error combining sinks: " + err.Error())
+		}
+		// Loopback to default source
+		_, err = ExeCmd("pactl load-module module-loopback sink=soundboard_mix source=" + defaultSource)
+		if err != nil {
+			log.Println("Error loopbacking: " + err.Error())
+		}
+		// Create new source
+		_, err = ExeCmd(`pactl load-module module-remap-source master=soundboard_mix.monitor source_name=soundboard_mic source_properties=device.description="soundboard_mic"`)
+		if err != nil {
+			log.Println("Error creating new source: " + err.Error())
+		}
+		log.Println("Created new source soundboard_mic")
+	}
+
+	log.Println("Finished preparations")
+}
+
 // https://stackoverflow.com/a/20438245
 func ExeCmd(cmd string) (string, error) {
 	log.Printf("command is %s\n", cmd)
@@ -46,8 +118,24 @@ func ExeCmd(cmd string) (string, error) {
 	return string(out), nil
 }
 
-// StartProgramInBackground starts a program in the background using nohup with optional environment variables.
-func StartProgramInBackground(program string, args []string, envVars []string) error {
+func ExeCmdRoutine(cmd string) {
+
+	go func() {
+		// ExeCmd aufrufen
+		out, err := ExeCmd(cmd)
+		if err != nil {
+			log.Println("Error running command " + cmd + " in go routine: " + err.Error())
+			return
+		}
+		if out != "" {
+			log.Println("Command " + cmd + " returned " + strings.TrimSpace(out))
+		}
+	}()
+
+}
+
+// ExeCmdBackground starts a program in the background using nohup with optional environment variables.
+func ExeCmdBackground(program string, args []string, envVars []string) error {
 	// Combine the program and arguments into a single command
 	cmd := exec.Command("nohup", append([]string{program}, args...)...)
 

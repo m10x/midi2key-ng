@@ -27,7 +27,6 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 	}
 
 	var newVolume, device, payload string
-	log.Println("Payload: " + mapKeys[key].Payload)
 	switch {
 	case strings.HasPrefix(mapKeys[key].Payload, "Audio:"):
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Audio:"))
@@ -139,21 +138,19 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 		}
 	case strings.HasPrefix(mapKeys[key].Payload, "Keypress:"):
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Keypress:"))
-		pkgCmd.ExeCmd(`echo key '` + payload + `' | dotoolc`)
+		pkgCmd.ExeCmdRoutine(`echo key '` + payload + `' | dotoolc`)
 	case strings.HasPrefix(mapKeys[key].Payload, "Write:"):
 		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Write:"))
 		payload = strings.ReplaceAll(payload, "'", "'\\''")
-		pkgCmd.ExeCmd(`echo type '` + payload + `' | dotoolc`)
+		pkgCmd.ExeCmdRoutine(`echo type '` + payload + `' | dotoolc`)
+	case strings.HasPrefix(mapKeys[key].Payload, "Sound:"):
+		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Sound:"))
+		pkgCmd.ExeCmdRoutine(`paplay --device=soundboard_router -p ` + payload + ` --volume=32768`)
+	case strings.HasPrefix(mapKeys[key].Payload, "Cmd:"):
+		payload = strings.TrimSpace(strings.TrimPrefix(mapKeys[key].Payload, "Cmd:"))
+		pkgCmd.ExeCmdRoutine(payload)
 	default:
-		payload = mapKeys[key].Payload
-		stdout, err := pkgCmd.ExeCmd(payload)
-
-		if err != nil {
-			log.Println("Error cmd.Output" + err.Error())
-			break
-		}
-
-		log.Println("Output: " + string(stdout))
+		log.Println("Unknown payload type " + mapKeys[key].Payload)
 	}
 
 	log.Printf("HOTKEY: %s\n", payload)

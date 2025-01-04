@@ -10,14 +10,41 @@
 
 Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Developed for Linux (x11 & wayland) and a Behringer X Touch Mini.
 
+SOOOUUUUND
+
+
+
+➜  ~ pactl unload-module module-remap-source
+➜  ~ pactl unload-module module-loopback
+➜  ~ pactl unload-module module-combine-sink
+➜  ~ pactl unload-module module-null-sink
+
+pactl list sources `Name: soundboard_mic`
+
+pactl load-module module-null-sink sink_name=soundboard_mix sink_properties=device.description=SoundboardMix
+pactl get-default-sink
+pactl load-module module-combine-sink sink_name=soundboard_router slaves=alsa_output.usb-Audient_Audient_iD4-00.analog-surround-40,soundboard_mix sink_properties=device.description="SoundboardRouter"
+pactl get-default-source
+pactl load-module module-loopback sink=soundboard_mix source=alsa_input.usb-Audient_Audient_iD4-00.multichannel-input
+pactl load-module module-remap-source master=soundboard_mix.monitor source_name=soundboard_mic source_properties=device.description="soundboard_mic"
+
+pactl set-default-source soundboard_mic
+
+paplay --device=soundboard_router -p Downloads/Short\ Song\ \(English\ Song\)🎵\ \[W\ Lyrics\]\ 30\ seconds.wav --volume=32000
+
+
+
 ## Features
 Give your midicontroller the ability to:
 - emulate key presses, mouse clicks/movements
   - Look [here](https://git.sr.ht/~geb/dotool/tree/master/doc/dotool.1.scd#L62) for possible input emulations
 - write text
 - run console commands
+- soundboard
+  - play audio files (e.g. wav, flac, ogg) as microphone input
+  - run `paplay --list-file-formats` to list all available formats
 - control your audio
-  - input/output devices, applications, focused application
+  - input/output devices, applications, focused application (Currently only Gnome)
   - increase/decrease/set volume
   - mute/unmute/toggle
 
@@ -36,38 +63,30 @@ Edit an Assignment
 ### Option 1: Download precompiled binary
 Download a precompiled binary from the [latest Release](https://github.com/m10x/midi2key-ng/releases).  
 
-### Option 2: Fetch using go
+### Option 2: Install using go
 The repository can be fetched and installed using Go.  
-`go install -v github.com/m10x/midi2key-ng@latest`  
+`go install -v github.com/m10x/midi2key-ng@latest`
+
+### Requirements
+- Install [DoTool](https://sr.ht/~geb/dotool/) for input emulation
+    - `git clone https://git.sr.ht/\~geb/dotool` 
+    - `sudo apt install scdoc`
+    - `cd dotool && ./build.sh && sudo ./build.sh install`
+    - `sudo udevadm control --reload && sudo udevadm trigger`
+- Install Gnome Extension [Window Calls Extended](https://github.com/hseliger/window-calls-extended) to control audio of focused application
   
 ## Roadmap
+- spam actions if key keeps getting pressed
 - warn if key is already assigend
 - reorder rows
 - multiple profiles
 - hotkeys to start/stop listening
 - implement soundboard functionality using [beep](https://github.com/faiface/beep)
-- add mouse emulation functionalities
 - add optional textbox with log output
 - add code comments
 - export / import Key Mapping
 - improve design, layout etc.
 - test other midi controllers
-
-## For Developers
-- `sudo apt install libx11-dev xorg-dev libxtst-dev`
-- `sudo apt-get install libasound2-dev`
-
-## For Wayland
-- currently there are no usable golang libraries to emulate e.g. keypresses on wayland. However as a workaround it's possible to use commandline tools like ydotool:
-  - https://github.com/ReimuNotMoe/ydotool/blob/master/README.md#examples
-  - follow https://github.com/ReimuNotMoe/ydotool/issues/36#issuecomment-788148567
-  - Gnome Use: https://github.com/hseliger/window-calls-extended
-  - DoTool https://sr.ht/~geb/dotool/
-    - `git clone https://git.sr.ht/\~geb/dotool` 
-    - `sudo apt install scdoc`
-    - `cd dotool && ./build.sh && sudo ./build.sh install`
-    - `sudo udevadm control --reload && sudo udevadm trigger`
-    - See https://git.sr.ht/~geb/dotool/tree/master/doc/dotool.1.scd#L62 for possible input simulations
 
 ## Credits
 
@@ -79,3 +98,7 @@ https://fyne.io/
 **gomidi**  
 https://gitlab.com/gomidi/midi/ 
 https://pkg.go.dev/gitlab.com/gomidi/midi/v2
+
+### Input Emulation:
+**dotool**
+https://sr.ht/~geb/dotool/

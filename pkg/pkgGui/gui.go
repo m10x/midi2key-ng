@@ -162,18 +162,18 @@ func Startup(versionTool string) {
 		entryDescription := widget.NewEntry()
 		lblPayload := widget.NewLabel("Payload:")
 		entryPayload := widget.NewEntry()
-		comboPayload = widget.NewSelect([]string{"Command Line Command", "Keypress (combo)", "Write String", "Audio Control"}, func(value string) {
-			// TODO: Add Popup to speficy the wanted Payload. Eg. if Audio Control: Popup to choose if Mute, Volume Up, Volume Down
-			if comboPayload.SelectedIndex() == 0 {
-				entryPayload.Text = "echo type 'example' | dotoolc"
+		comboPayload = widget.NewSelect([]string{"Command Line Command", "Keypress (combo)", "Write String", "Audio Control", "Soundboard"}, func(value string) {
+			switch comboPayload.SelectedIndex() {
+			case 0:
+				entryPayload.Text = "Cmd: echo type 'example' | dotoolc"
 				entryPayload.Refresh()
-			} else if comboPayload.SelectedIndex() == 1 {
+			case 1:
 				entryPayload.Text = "Keypress: ctrl+shift+a super+alt+altgr+1"
 				entryPayload.Refresh()
-			} else if comboPayload.SelectedIndex() == 2 {
+			case 2:
 				entryPayload.Text = "Write: example"
 				entryPayload.Refresh()
-			} else if comboPayload.SelectedIndex() == 3 {
+			case 3:
 				devices := []string{"App: Focused Application"}
 				for _, sink := range pkgCmd.GetSinks() {
 					devices = append(devices, sink.Description)
@@ -196,6 +196,9 @@ func Startup(versionTool string) {
 				})
 				popupPayload = widget.NewModalPopUp(container.NewVBox(comboDevice, comboSound, container.NewHBox(btnSavePayload, btnCancelPayload)), popupEdit.Canvas)
 				popupPayload.Show()
+			case 4:
+				entryPayload.Text = "Sound: /tmp/foo.wav"
+				entryPayload.Refresh()
 			}
 			log.Println(entryPayload.Text)
 			configureCheckHeld(entryPayload.Text)
