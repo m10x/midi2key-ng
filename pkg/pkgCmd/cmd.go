@@ -115,7 +115,7 @@ func ExeCmd(cmd string) (string, error) {
 		return "", err
 	}
 
-	return string(out), nil
+	return strings.TrimSpace(string(out)), nil
 }
 
 func ExeCmdRoutine(cmd string) {
@@ -128,7 +128,7 @@ func ExeCmdRoutine(cmd string) {
 			return
 		}
 		if out != "" {
-			log.Println("Command " + cmd + " returned " + strings.TrimSpace(out))
+			log.Println("Command " + cmd + " returned " + out)
 		}
 	}()
 
