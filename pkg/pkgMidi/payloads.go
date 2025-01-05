@@ -46,7 +46,7 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 			log.Println("The Focused Application's PID is " + focusedWindowPID)
 			focusedWindowAudioSink, err := pkgCmd.GetPulseAudioSinkDescriptionByPID(focusedWindowPID)
 			if err != nil {
-				log.Println("Error getting the audio sink of the focused window:" + err.Error())
+				log.Println("Error getting the audio sink of the focused window: " + err.Error())
 				return nil
 			}
 			device = "App: " + focusedWindowAudioSink

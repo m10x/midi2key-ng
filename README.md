@@ -46,17 +46,19 @@ The repository can be fetched and installed using Go.
 
 ### Requirements
 
-## x11
-- `apt install xprop xdotool` for input emulation and audio control of focused application
-xprop -id $(xdotool getwindowfocus) | grep "_NET_WM_PID" | awk '{print $3}'
-
-## Wayland
+## general
 - Install [DoTool](https://sr.ht/~geb/dotool/) for input emulation
     - `git clone https://git.sr.ht/\~geb/dotool` 
     - `sudo apt install scdoc`
     - `cd dotool && ./build.sh && sudo ./build.sh install`
     - `sudo udevadm control --reload && sudo udevadm trigger`
+    - restart OS
     - `echo write test | dotool` to check if dotool works
+
+## x11
+- `apt install xprop xdotool` for audio control of focused application
+
+## Wayland
 - Install Gnome Extension [Window Calls Extended](https://github.com/hseliger/window-calls-extended) to control audio of focused application
   
 ## Roadmap
