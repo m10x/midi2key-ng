@@ -58,6 +58,26 @@ var (
 	a              fyne.App
 )
 
+func enableRowButtons() {
+	if selectedCell.Row >= 0 && selectedCell.Row < len(data) {
+		btnDeleteRow.Enable()
+		btnEditRow.Enable()
+	} else {
+		btnDeleteRow.Disable()
+		btnEditRow.Disable()
+	}
+	if selectedCell.Row > 0 {
+		btnMoveRowUp.Enable()
+	} else {
+		btnMoveRowUp.Disable()
+	}
+	if selectedCell.Row < len(data)-1 {
+		btnMoveRowDown.Enable()
+	} else {
+		btnMoveRowDown.Disable()
+	}
+}
+
 func Startup(versionTool string) {
 	a = app.NewWithID("de.m10x.midi2key-ng")
 	w := a.NewWindow("midi2key-ng " + versionTool)
@@ -101,7 +121,11 @@ func Startup(versionTool string) {
 			Col: 0,
 		})
 		log.Println("Selected Cell Col", id.Col, "Row", id.Row)
-		selectedCell = id // wichtig für deleteRow und editRow
+		selectedCell = id // important for deleteRow, editRow, moveRowUp, moveRowDown
+
+		if btnListen.Text == strStartListen {
+			enableRowButtons()
+		}
 	}
 
 	table.SetColumnWidth(0, 39)
@@ -132,6 +156,7 @@ func Startup(versionTool string) {
 		table.Refresh()
 		setPreferences(versionTool)
 	})
+	btnDeleteRow.Disable()
 	btnEditRow = widget.NewButton("Edit Row", func() {
 		rowToEdit := selectedCell.Row
 		popupEdit := widget.NewModalPopUp(nil, w.Canvas())
@@ -260,6 +285,7 @@ func Startup(versionTool string) {
 		popupEdit.Resize(fyne.NewSize(400, 200))
 		popupEdit.Show()
 	})
+	btnEditRow.Disable()
 	btnMoveRowUp = widget.NewButton("", func() {
 		if selectedCell.Row > 0 {
 			// swap rows
@@ -279,6 +305,7 @@ func Startup(versionTool string) {
 		}
 	})
 	btnMoveRowUp.Icon = theme.Icon(theme.IconNameArrowDropUp)
+	btnMoveRowUp.Disable()
 
 	btnMoveRowDown = widget.NewButton("", func() {
 		if selectedCell.Row < len(data)-1 {
@@ -299,6 +326,7 @@ func Startup(versionTool string) {
 		}
 	})
 	btnMoveRowDown.Icon = theme.Icon(theme.IconNameArrowDropDown)
+	btnMoveRowDown.Disable()
 
 	lblOutput = widget.NewLabel("")
 
@@ -422,6 +450,8 @@ func listen() {
 		btnAddRow.Disable()
 		btnDeleteRow.Disable()
 		btnEditRow.Disable()
+		btnMoveRowUp.Disable()
+		btnMoveRowDown.Disable()
 	} else {
 		pkgMidi.StopListen()
 		btnListen.Text = strStartListen
@@ -432,8 +462,7 @@ func listen() {
 		btnRefresh.Enable()
 		comboSelect.Enable()
 		btnAddRow.Enable()
-		btnDeleteRow.Enable()
-		btnEditRow.Enable()
+		enableRowButtons()
 	}
 }
 
