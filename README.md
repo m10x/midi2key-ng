@@ -8,7 +8,7 @@
 
 ## About
 
-Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Developed for Linux (Gnome Wayland & Pop!_OS x11) and a Behringer X Touch Mini; however it should work for other Midi Controller and Distros, too!
+GUI to Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. Developed for Linux (Gnome Wayland & Pop!_OS x11) and a Behringer X Touch Mini; however it should work for other Midi Controller and Distros, too!
 
 ## Features
 Give your midicontroller the ability to:
