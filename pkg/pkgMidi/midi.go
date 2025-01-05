@@ -34,7 +34,6 @@ type KeyStruct struct {
 	Payload  string
 	Velocity uint16
 	Special  bool
-	Held     bool
 }
 
 func GetInputPorts() []string {
