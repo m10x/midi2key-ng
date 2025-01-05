@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/m10x/midi2key-ng/pkg/pkgCmd"
@@ -41,6 +42,8 @@ var (
 	btnAddRow      *widget.Button
 	btnDeleteRow   *widget.Button
 	btnEditRow     *widget.Button
+	btnMoveRowUp   *widget.Button
+	btnMoveRowDown *widget.Button
 	lblOutput      *widget.Label
 	checkSpecial   *widget.Check
 	checkHeld      *widget.Check
@@ -257,10 +260,49 @@ func Startup(versionTool string) {
 		popupEdit.Resize(fyne.NewSize(400, 200))
 		popupEdit.Show()
 	})
+	btnMoveRowUp = widget.NewButton("", func() {
+		if selectedCell.Row > 0 {
+			// swap rows
+			data[selectedCell.Row], data[selectedCell.Row-1] = data[selectedCell.Row-1], data[selectedCell.Row]
+			selectedCell.Row--
+
+			// select row again
+			table.Select(widget.TableCellID{
+				Row: selectedCell.Row,
+				Col: 0,
+			})
+
+			table.Refresh()
+			setPreferences(versionTool)
+		} else {
+			log.Println("Cannot move up: Already at the top row")
+		}
+	})
+	btnMoveRowUp.Icon = theme.Icon(theme.IconNameArrowDropUp)
+
+	btnMoveRowDown = widget.NewButton("", func() {
+		if selectedCell.Row < len(data)-1 {
+			// swap rows
+			data[selectedCell.Row], data[selectedCell.Row+1] = data[selectedCell.Row+1], data[selectedCell.Row]
+			selectedCell.Row++
+
+			// select row again
+			table.Select(widget.TableCellID{
+				Row: selectedCell.Row,
+				Col: 0,
+			})
+
+			table.Refresh()
+			setPreferences(versionTool)
+		} else {
+			log.Println("Cannot move down: Already at the bottom row")
+		}
+	})
+	btnMoveRowDown.Icon = theme.Icon(theme.IconNameArrowDropDown)
 
 	lblOutput = widget.NewLabel("")
 
-	hBoxTable := container.NewHBox(btnAddRow, btnEditRow, btnDeleteRow, lblOutput)
+	hBoxTable := container.NewHBox(btnAddRow, btnEditRow, btnDeleteRow, btnMoveRowUp, btnMoveRowDown, lblOutput)
 
 	w.SetContent(container.NewBorder(
 		container.NewBorder(nil, nil, hello, hBoxSelect, comboSelect), hBoxTable, nil, nil,
