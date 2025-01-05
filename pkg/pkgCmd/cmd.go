@@ -43,10 +43,14 @@ func Prepare() {
 		if err != nil {
 			log.Println("Error reading keyboard layout, defaulting to 'us': " + err.Error())
 		} else {
-			keyboardLayout = pkgUtils.GetStringInBetween(output, `XKBLAYOUT="`, `"`)
+			if strings.Contains(output, `XKBLAYOUT="`) {
+				keyboardLayout = pkgUtils.GetStringInBetween(output, `XKBLAYOUT="`, `"`)
+			} else {
+				keyboardLayout = pkgUtils.GetStringInBetween(output, `XKBLAYOUT=`, "\n")
+			}
 			log.Println("Detected keyboard layout " + keyboardLayout)
 		}
-		err = ExeCmdBackground("dotoold", []string{}, []string{"DOTOOL_XKB_LAYOUT=" + keyboardLayout})
+		output, err = ExeCmd("export DOTOOL_XKB_LAYOUT=" + keyboardLayout + "; nohup dotoold")
 		if err != nil {
 			log.Println("Error starting dotoold: " + err.Error())
 		} else {
