@@ -26,6 +26,10 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 		return nil
 	}
 
+	log.Printf("Payload: %s\n", mapKeys[key].Payload)
+	lblOutput.Text = mapKeys[key].Payload
+	lblOutput.Refresh()
+
 	var newVolume, device, payload string
 	switch {
 	case strings.HasPrefix(mapKeys[key].Payload, "Audio:"):
@@ -153,9 +157,6 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 		log.Println("Unknown payload type " + mapKeys[key].Payload)
 	}
 
-	log.Printf("HOTKEY: %s\n", payload)
-	var msg midi.Message
-
 	vel := uint8(mapKeys[key].Velocity)
 	if mapKeys[key].MidiType == MIDI_BUTTON && mapKeys[key].Special {
 		if uint16(curVel) == mapKeys[key].Velocity {
@@ -164,12 +165,12 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 		}
 	}
 	mapCurrentVelocity[key] = vel
+
+	var msg midi.Message
 	switch mapKeys[key].MidiType {
 	case MIDI_BUTTON:
 		log.Printf("Simulate Note on, ch=%d, key=%d, vel=%d\n", ch, key, vel)
 		msg = midi.NoteOn(ch, key, vel)
-		lblOutput.Text = payload
-		lblOutput.Refresh()
 	// Behringer X-Touch Mini https://stackoverflow.com/a/49740979
 	case MIDI_KNOB:
 		if strings.Contains(newVolume, "/") {
@@ -196,8 +197,6 @@ func doHotkey(lblOutput *widget.Label, mapKeys map[uint8]KeyStruct, ch uint8, ke
 		log.Printf("Simulate Controlchange, ch=%d, cc=%d, vel=%d\n", ch, key, vel)
 		msg = midi.ControlChange(ch, key, vel)
 		log.Print("newVolume", newVolume)
-		lblOutput.Text = device + newVolume
-		lblOutput.Refresh()
 	}
 
 	return msg
