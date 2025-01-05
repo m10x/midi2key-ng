@@ -47,9 +47,8 @@ func getPreferences(versionTool string) {
 		return
 	} else if versionPref != versionTool {
 		log.Printf("Version of preferences (%s) may not be compatible with version of midi2key-ng (%s)\n", versionPref, versionTool)
-	} else {
-		log.Printf("Loading preferences...")
 	}
+	log.Printf("Loading preferences...")
 
 	deviceOptions := comboSelect.Options
 	prefDevice := a.Preferences().StringWithFallback("device", "")

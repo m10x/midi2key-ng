@@ -8,31 +8,7 @@
 
 ## About
 
-Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Developed for Linux (x11 & wayland) and a Behringer X Touch Mini.
-
-SOOOUUUUND
-
-
-
-➜  ~ pactl unload-module module-remap-source
-➜  ~ pactl unload-module module-loopback
-➜  ~ pactl unload-module module-combine-sink
-➜  ~ pactl unload-module module-null-sink
-
-pactl list sources `Name: soundboard_mic`
-
-pactl load-module module-null-sink sink_name=soundboard_mix sink_properties=device.description=SoundboardMix
-pactl get-default-sink
-pactl load-module module-combine-sink sink_name=soundboard_router slaves=alsa_output.usb-Audient_Audient_iD4-00.analog-surround-40,soundboard_mix sink_properties=device.description="SoundboardRouter"
-pactl get-default-source
-pactl load-module module-loopback sink=soundboard_mix source=alsa_input.usb-Audient_Audient_iD4-00.multichannel-input
-pactl load-module module-remap-source master=soundboard_mix.monitor source_name=soundboard_mic source_properties=device.description="soundboard_mic"
-
-pactl set-default-source soundboard_mic
-
-paplay --device=soundboard_router -p Downloads/Short\ Song\ \(English\ Song\)🎵\ \[W\ Lyrics\]\ 30\ seconds.wav --volume=32000
-
-
+Map Buttons, Knobs and Sliders of your Midi Controller to Different Functions. With GUI. Developed for Linux (Gnome Wayland & Pop!_OS x11) and a Behringer X Touch Mini; however it should work for other Midi Controller and Distros, too!
 
 ## Features
 Give your midicontroller the ability to:
@@ -77,16 +53,17 @@ The repository can be fetched and installed using Go.
 - Install Gnome Extension [Window Calls Extended](https://github.com/hseliger/window-calls-extended) to control audio of focused application
   
 ## Roadmap
-- soundfile picker
-- sort table
-- spam actions if key keeps getting pressed (hold)
+- sort table https://fynelabs.com/2023/10/05/user-data-sorting-with-a-fyne-table-widget/
 - reorder rows
+- self update https://fynelabs.com/2022/11/17/easy-selfupdate-deployment-for-go-application/
+- soundfile picker
+- spam actions if key keeps getting pressed (hold)
 - multiple profiles
 - hotkeys to start/stop listening
 - add optional textbox with log output
 - add code comments
 - create default Key Mapping for Behringer X Touch Mini with an easy option to add more defaults
-- export / import Key Mapping
+- export (aka Backup) / import Key Mapping
 - improve design, layout etc.
 - test other midi controllers
 
