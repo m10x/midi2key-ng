@@ -3,7 +3,6 @@ package pkgGui
 import (
 	"log"
 	"strconv"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -23,8 +22,7 @@ const (
 	COLUMN_DESCRIPTION = 2
 	COLUMN_VELOCITY    = 3
 	COLUMN_SPECIAL     = 4
-	COLUMN_HELD        = 5
-	COLUMN_COUNT       = 6
+	COLUMN_COUNT       = 5
 )
 
 var (
@@ -46,7 +44,6 @@ var (
 	btnMoveRowDown *widget.Button
 	lblOutput      *widget.Label
 	checkSpecial   *widget.Check
-	checkHeld      *widget.Check
 	entryVelocity  *widget.Entry
 	selectedCell   widget.TableCellID
 	popupPayload   *widget.PopUp
@@ -81,7 +78,7 @@ func enableRowButtons() {
 func Startup(versionTool string) {
 	a = app.NewWithID("de.m10x.midi2key-ng")
 	w := a.NewWindow("midi2key-ng " + versionTool)
-	w.Resize(fyne.NewSize(1050, 400))
+	w.Resize(fyne.NewSize(1055, 400))
 
 	mapKeys = make(map[uint8]pkgMidi.KeyStruct)
 
@@ -129,17 +126,16 @@ func Startup(versionTool string) {
 	}
 
 	table.SetColumnWidth(0, 39)
-	table.SetColumnWidth(1, 435)
-	table.SetColumnWidth(2, 335)
-	table.SetColumnWidth(3, 70)
+	table.SetColumnWidth(1, 475)
+	table.SetColumnWidth(2, 375)
+	table.SetColumnWidth(3, 40)
 	table.SetColumnWidth(4, 60)
-	table.SetColumnWidth(5, 45)
 
 	table.CreateHeader = headerCreate
 	table.UpdateHeader = headerUpdate
 
 	btnAddRow = widget.NewButton("Add Row", func() {
-		data = append(data, []string{"-", "-", "-", "0", "false", "false"})
+		data = append(data, []string{"-", "-", "-", "0", "false"})
 		table.Refresh()
 		setPreferences(versionTool)
 	})
@@ -179,7 +175,6 @@ func Startup(versionTool string) {
 			btnNote.Enable()
 
 			configureCheckSpecial(strSpecialDisabled)
-			configureCheckHeld("")
 			if len(btnNote.Text) < 6 {
 				switch btnNote.Text[:1] {
 				case pkgMidi.MIDI_BUTTON:
@@ -237,17 +232,13 @@ func Startup(versionTool string) {
 				entryPayload.Refresh()
 			}
 			log.Println(entryPayload.Text)
-			configureCheckHeld(entryPayload.Text)
 		})
 		lblVelocity := widget.NewLabel("Velocity:")
 		entryVelocity = widget.NewEntry()
 		lblToggle := widget.NewLabel("Special:")
 		checkSpecial = widget.NewCheck(strSpecialDisabled, nil)
-		lblHeld := widget.NewLabel("Held:")
-		checkHeld = widget.NewCheck("Held", nil)
 		if btnNote.Text == strNoButton {
 			checkSpecial.Disable()
-			checkHeld.Disable()
 		}
 
 		btnSave := widget.NewButton("Save", func() {
@@ -260,11 +251,6 @@ func Startup(versionTool string) {
 			} else {
 				data[rowToEdit][COLUMN_SPECIAL] = "false"
 			}
-			if checkHeld.Checked {
-				data[rowToEdit][COLUMN_HELD] = "true"
-			} else {
-				data[rowToEdit][COLUMN_HELD] = "false"
-			}
 			table.Refresh()
 			setPreferences(versionTool)
 			popupEdit.Hide()
@@ -275,13 +261,11 @@ func Startup(versionTool string) {
 
 		btnNote.Text = data[rowToEdit][COLUMN_KEY]
 		configureCheckSpecial(strSpecialDisabled)
-		configureCheckHeld(entryPayload.Text)
 		entryPayload.Text = data[rowToEdit][COLUMN_PAYLOAD]
 		entryDescription.Text = data[rowToEdit][COLUMN_DESCRIPTION]
 		entryVelocity.Text = data[rowToEdit][COLUMN_VELOCITY]
 		checkSpecial.Checked = data[rowToEdit][COLUMN_SPECIAL] == "true"
-		checkHeld.Checked = data[rowToEdit][COLUMN_HELD] == "true"
-		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblPayload, container.NewVBox(comboPayload, entryPayload), lblDescription, entryDescription, lblVelocity, entryVelocity, lblToggle, checkSpecial, lblHeld, checkHeld), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
+		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblPayload, container.NewVBox(comboPayload, entryPayload), lblDescription, entryDescription, lblVelocity, entryVelocity, lblToggle, checkSpecial), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
 		popupEdit.Resize(fyne.NewSize(400, 200))
 		popupEdit.Show()
 	})
@@ -378,17 +362,6 @@ func configureCheckSpecial(strSpecialDisabled string) {
 		checkSpecial.Refresh()
 	}
 }
-func configureCheckHeld(payloadText string) {
-	if len(btnNote.Text) > 6 || (payloadText != "" && strings.HasPrefix(payloadText, "Keypress:")) || btnNote.Text[0] != 'B' {
-		checkHeld.Disable()
-		checkHeld.Text = "(disabled) Held"
-		checkHeld.Refresh()
-	} else {
-		checkHeld.Enable()
-		checkHeld.Text = "Held"
-		checkHeld.Refresh()
-	}
-}
 
 func refreshDevices() {
 	devices := pkgMidi.GetInputPorts()
@@ -431,7 +404,6 @@ func fillMapKeys() {
 			Payload:  data[i][COLUMN_PAYLOAD],
 			Velocity: uint16(vel),
 			Special:  data[i][COLUMN_SPECIAL] == "true",
-			Held:     data[i][COLUMN_HELD] == "true",
 		}
 	}
 }
@@ -491,11 +463,9 @@ func headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 	case 2:
 		header.SetText("Description")
 	case 3:
-		header.SetText("Velocity")
+		header.SetText("Vel")
 	case 4:
 		header.SetText("Special")
-	case 5:
-		header.SetText("Held")
 	}
 
 	// header.OnTapped = func() {
