@@ -84,17 +84,16 @@ func selfManage(a fyne.App, w fyne.Window, sourceURL string) {
 	publicKey := ed25519.PublicKey{92, 160, 144, 239, 198, 220, 223, 157, 245, 210, 226, 218, 96, 33, 135, 235, 59, 40, 171, 175, 247, 183, 212, 247, 115, 23, 226, 247, 239, 148, 90, 54}
 	httpSource := selfupdate.NewHTTPSource(nil, sourceURL)
 	log.Println("Checking for new version")
-	latestVersion, err := httpSource.LatestVersion()
-	if err != nil {
-		log.Println("Error checking for the latest version: " + err.Error())
-		return
-	}
-	log.Printf("Current version: %s. Found version: %v\n", a.Metadata().Version, latestVersion)
 	config := fyneselfupdate.NewConfigWithTimeout(a, w, time.Duration(1)*time.Minute,
 		httpSource,
 		selfupdate.Schedule{FetchOnStart: true, Interval: time.Hour * time.Duration(24)}, // Checking for binary update on start and every 24 hours
 		publicKey)
-	_, err = selfupdate.Manage(config)
+
+	selfupdate.LogError = log.Printf
+	selfupdate.LogInfo = log.Printf
+	selfupdate.LogDebug = log.Printf
+
+	_, err := selfupdate.Manage(config)
 	if err != nil {
 		log.Println("Error while setting up update manager: ", err)
 		return
