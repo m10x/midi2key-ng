@@ -111,7 +111,7 @@ func Startup(versionTool string) {
 	w := a.NewWindow(a.Metadata().Name + " " + versionTool)
 	w.Resize(fyne.NewSize(1055, 400))
 
-	selfManage(a, w, "https://github.com/m10x/midi2key-ng/releases/latest/download/midi2key-ng")
+	selfManage(a, w, "https://github.com/m10x/midi2key-ng/releases/latest/download/midi2key-ng-{{.OS}}-{{.Arch}}")
 
 	mapKeys = make(map[uint8]pkgMidi.KeyStruct)
 
