@@ -1,8 +1,11 @@
 package pkgGui
 
 import (
+	"crypto/ed25519"
+	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -12,6 +15,8 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	"github.com/fynelabs/fyneselfupdate"
+	"github.com/fynelabs/selfupdate"
 	"github.com/m10x/midi2key-ng/pkg/pkgCmd"
 	"github.com/m10x/midi2key-ng/pkg/pkgMidi"
 )
@@ -75,10 +80,40 @@ func enableRowButtons() {
 	}
 }
 
+func selfManage(a fyne.App, w fyne.Window, sourceURL string) {
+	// Used `selfupdatectl create-keys` followed by `selfupdatectl print-key`
+	publicKey := ed25519.PublicKey{92, 160, 144, 239, 198, 220, 223, 157, 245, 210, 226, 218, 96, 33, 135, 235, 59, 40, 171, 175, 247, 183, 212, 247, 115, 23, 226, 247, 239, 148, 90, 54}
+	httpSource := selfupdate.NewHTTPSource(nil, sourceURL)
+	log.Println("Checking for new version")
+	latestVersion, err := httpSource.LatestVersion()
+	if err != nil {
+		log.Println("Error checking for the latest version: " + err.Error())
+		return
+	}
+	fmt.Printf("Current version: %s. Found version: %v\n", a.Metadata().Version, latestVersion)
+	config := fyneselfupdate.NewConfigWithTimeout(a, w, time.Duration(1)*time.Minute,
+		httpSource,
+		selfupdate.Schedule{FetchOnStart: true, Interval: time.Hour * time.Duration(24)}, // Checking for binary update on start and every 24 hours
+		publicKey)
+	_, err = selfupdate.Manage(config)
+	if err != nil {
+		log.Println("Error while setting up update manager: ", err)
+		return
+	}
+}
+
 func Startup(versionTool string) {
-	a = app.NewWithID("de.m10x.midi2key-ng")
-	w := a.NewWindow("midi2key-ng " + versionTool)
+	a = app.New()
+	app.SetMetadata(fyne.AppMetadata{
+		ID:      "de.m10x.midi2key-ng",
+		Name:    "midi2key-ng",
+		Version: versionTool,
+		Build:   123,
+	})
+	w := a.NewWindow(a.Metadata().Name + " " + versionTool)
 	w.Resize(fyne.NewSize(1055, 400))
+
+	selfManage(a, w, "https://github.com/m10x/midi2key-ng/releases/latest/download/midi2key-ng")
 
 	mapKeys = make(map[uint8]pkgMidi.KeyStruct)
 
