@@ -1,6 +1,7 @@
 package pkgCmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -17,6 +18,8 @@ const (
 	DEV_SINK_INPUT = 2
 )
 
+var SESSION_TYPE = ""
+
 type ApplicationSinkStruct struct {
 	Index       string // Sink Input #
 	Name        string // sinkinput: sink: Name
@@ -29,6 +32,25 @@ type ApplicationSinkStruct struct {
 
 func Prepare() {
 	log.Println("Initiating preparations")
+
+	// session type. wayland or x11?
+	if SESSION_TYPE != "" {
+		log.Println("Session type is " + SESSION_TYPE)
+	} else {
+		log.Println("Getting session type")
+		output, err := ExeCmd("echo $XDG_SESSION_TYPE")
+		if err != nil {
+			log.Println("Error getting session type " + err.Error())
+		} else {
+			SESSION_TYPE = strings.TrimSpace(output)
+			if SESSION_TYPE != "wayland" && SESSION_TYPE != "x11" {
+				log.Println("Unknown session type " + SESSION_TYPE)
+			} else {
+				log.Println("Session type is " + SESSION_TYPE)
+			}
+		}
+	}
+
 	// dotool
 	dotoold, err := IsProgramRunning("dotoold")
 	if err != nil {
@@ -43,7 +65,12 @@ func Prepare() {
 		if err != nil {
 			log.Println("Error reading keyboard layout, defaulting to 'us': " + err.Error())
 		} else {
-			keyboardLayout = pkgUtils.GetStringInBetween(output, `XKBLAYOUT="`, `"`)
+			// value may or may not be between double quotes
+			if strings.Contains(output, `XKBLAYOUT="`) {
+				keyboardLayout = pkgUtils.GetStringInBetween(output, `XKBLAYOUT="`, `"`)
+			} else {
+				keyboardLayout = pkgUtils.GetStringInBetween(output, `XKBLAYOUT=`, "\n")
+			}
 			log.Println("Detected keyboard layout " + keyboardLayout)
 		}
 		err = ExeCmdBackground("dotoold", []string{}, []string{"DOTOOL_XKB_LAYOUT=" + keyboardLayout})
@@ -184,15 +211,20 @@ func IsProgramRunning(programName string) (bool, error) {
 
 // GetFocusedWindowPID retrieves the PID of the currently focused window using gdbus.
 func GetFocusedWindowPID() (string, error) {
-	cmd := `gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusPID`
+	var cmd string
+	if SESSION_TYPE == "x11" {
+		cmd = `xprop -id $(xdotool getwindowfocus) | grep "_NET_WM_PID" | awk '{print $3}'`
+	} else if SESSION_TYPE == "wayland" {
+		cmd = `gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowsExt --method org.gnome.Shell.Extensions.WindowsExt.FocusPID | | awk -F"[(')]" '{print $2}'`
+	} else {
+		return "", errors.New("Unknown session type " + SESSION_TYPE)
+	}
 	output, err := ExeCmd(cmd)
 	if err != nil {
 		return "", err
 	}
 
-	// Extract the window PID from the gdbus output
-	pid := pkgUtils.GetStringInBetween(output, `('`, `',)`)
-	return pid, nil
+	return output, nil
 }
 
 func GetPulseAudioSinkDescriptionByPID(pid string) (string, error) {

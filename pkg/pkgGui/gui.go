@@ -3,13 +3,13 @@ package pkgGui
 import (
 	"log"
 	"strconv"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/m10x/midi2key-ng/pkg/pkgCmd"
@@ -22,8 +22,7 @@ const (
 	COLUMN_DESCRIPTION = 2
 	COLUMN_VELOCITY    = 3
 	COLUMN_SPECIAL     = 4
-	COLUMN_HELD        = 5
-	COLUMN_COUNT       = 6
+	COLUMN_COUNT       = 5
 )
 
 var (
@@ -41,9 +40,10 @@ var (
 	btnAddRow      *widget.Button
 	btnDeleteRow   *widget.Button
 	btnEditRow     *widget.Button
+	btnMoveRowUp   *widget.Button
+	btnMoveRowDown *widget.Button
 	lblOutput      *widget.Label
 	checkSpecial   *widget.Check
-	checkHeld      *widget.Check
 	entryVelocity  *widget.Entry
 	selectedCell   widget.TableCellID
 	popupPayload   *widget.PopUp
@@ -55,10 +55,30 @@ var (
 	a              fyne.App
 )
 
+func enableRowButtons() {
+	if selectedCell.Row >= 0 && selectedCell.Row < len(data) {
+		btnDeleteRow.Enable()
+		btnEditRow.Enable()
+	} else {
+		btnDeleteRow.Disable()
+		btnEditRow.Disable()
+	}
+	if selectedCell.Row > 0 {
+		btnMoveRowUp.Enable()
+	} else {
+		btnMoveRowUp.Disable()
+	}
+	if selectedCell.Row < len(data)-1 {
+		btnMoveRowDown.Enable()
+	} else {
+		btnMoveRowDown.Disable()
+	}
+}
+
 func Startup(versionTool string) {
 	a = app.NewWithID("de.m10x.midi2key-ng")
 	w := a.NewWindow("midi2key-ng " + versionTool)
-	w.Resize(fyne.NewSize(1050, 400))
+	w.Resize(fyne.NewSize(1055, 400))
 
 	mapKeys = make(map[uint8]pkgMidi.KeyStruct)
 
@@ -98,21 +118,24 @@ func Startup(versionTool string) {
 			Col: 0,
 		})
 		log.Println("Selected Cell Col", id.Col, "Row", id.Row)
-		selectedCell = id // wichtig für deleteRow und editRow
+		selectedCell = id // important for deleteRow, editRow, moveRowUp, moveRowDown
+
+		if btnListen.Text == strStartListen {
+			enableRowButtons()
+		}
 	}
 
 	table.SetColumnWidth(0, 39)
-	table.SetColumnWidth(1, 435)
-	table.SetColumnWidth(2, 335)
-	table.SetColumnWidth(3, 70)
+	table.SetColumnWidth(1, 475)
+	table.SetColumnWidth(2, 375)
+	table.SetColumnWidth(3, 40)
 	table.SetColumnWidth(4, 60)
-	table.SetColumnWidth(5, 45)
 
 	table.CreateHeader = headerCreate
 	table.UpdateHeader = headerUpdate
 
 	btnAddRow = widget.NewButton("Add Row", func() {
-		data = append(data, []string{"-", "-", "-", "0", "false", "false"})
+		data = append(data, []string{"-", "-", "-", "0", "false"})
 		table.Refresh()
 		setPreferences(versionTool)
 	})
@@ -129,6 +152,7 @@ func Startup(versionTool string) {
 		table.Refresh()
 		setPreferences(versionTool)
 	})
+	btnDeleteRow.Disable()
 	btnEditRow = widget.NewButton("Edit Row", func() {
 		rowToEdit := selectedCell.Row
 		popupEdit := widget.NewModalPopUp(nil, w.Canvas())
@@ -151,7 +175,6 @@ func Startup(versionTool string) {
 			btnNote.Enable()
 
 			configureCheckSpecial(strSpecialDisabled)
-			configureCheckHeld("")
 			if len(btnNote.Text) < 6 {
 				switch btnNote.Text[:1] {
 				case pkgMidi.MIDI_BUTTON:
@@ -209,17 +232,13 @@ func Startup(versionTool string) {
 				entryPayload.Refresh()
 			}
 			log.Println(entryPayload.Text)
-			configureCheckHeld(entryPayload.Text)
 		})
 		lblVelocity := widget.NewLabel("Velocity:")
 		entryVelocity = widget.NewEntry()
 		lblToggle := widget.NewLabel("Special:")
 		checkSpecial = widget.NewCheck(strSpecialDisabled, nil)
-		lblHeld := widget.NewLabel("Held:")
-		checkHeld = widget.NewCheck("Held", nil)
 		if btnNote.Text == strNoButton {
 			checkSpecial.Disable()
-			checkHeld.Disable()
 		}
 
 		btnSave := widget.NewButton("Save", func() {
@@ -232,11 +251,6 @@ func Startup(versionTool string) {
 			} else {
 				data[rowToEdit][COLUMN_SPECIAL] = "false"
 			}
-			if checkHeld.Checked {
-				data[rowToEdit][COLUMN_HELD] = "true"
-			} else {
-				data[rowToEdit][COLUMN_HELD] = "false"
-			}
 			table.Refresh()
 			setPreferences(versionTool)
 			popupEdit.Hide()
@@ -247,20 +261,60 @@ func Startup(versionTool string) {
 
 		btnNote.Text = data[rowToEdit][COLUMN_KEY]
 		configureCheckSpecial(strSpecialDisabled)
-		configureCheckHeld(entryPayload.Text)
 		entryPayload.Text = data[rowToEdit][COLUMN_PAYLOAD]
 		entryDescription.Text = data[rowToEdit][COLUMN_DESCRIPTION]
 		entryVelocity.Text = data[rowToEdit][COLUMN_VELOCITY]
 		checkSpecial.Checked = data[rowToEdit][COLUMN_SPECIAL] == "true"
-		checkHeld.Checked = data[rowToEdit][COLUMN_HELD] == "true"
-		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblPayload, container.NewVBox(comboPayload, entryPayload), lblDescription, entryDescription, lblVelocity, entryVelocity, lblToggle, checkSpecial, lblHeld, checkHeld), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
+		popupEdit.Content = container.NewVBox(container.New(layout.NewFormLayout(), lblNote, btnNote, lblPayload, container.NewVBox(comboPayload, entryPayload), lblDescription, entryDescription, lblVelocity, entryVelocity, lblToggle, checkSpecial), container.NewCenter(container.NewHBox(btnSave, btnCancel)))
 		popupEdit.Resize(fyne.NewSize(400, 200))
 		popupEdit.Show()
 	})
+	btnEditRow.Disable()
+	btnMoveRowUp = widget.NewButton("", func() {
+		if selectedCell.Row > 0 {
+			// swap rows
+			data[selectedCell.Row], data[selectedCell.Row-1] = data[selectedCell.Row-1], data[selectedCell.Row]
+			selectedCell.Row--
+
+			// select row again
+			table.Select(widget.TableCellID{
+				Row: selectedCell.Row,
+				Col: 0,
+			})
+
+			table.Refresh()
+			setPreferences(versionTool)
+		} else {
+			log.Println("Cannot move up: Already at the top row")
+		}
+	})
+	btnMoveRowUp.Icon = theme.Icon(theme.IconNameArrowDropUp)
+	btnMoveRowUp.Disable()
+
+	btnMoveRowDown = widget.NewButton("", func() {
+		if selectedCell.Row < len(data)-1 {
+			// swap rows
+			data[selectedCell.Row], data[selectedCell.Row+1] = data[selectedCell.Row+1], data[selectedCell.Row]
+			selectedCell.Row++
+
+			// select row again
+			table.Select(widget.TableCellID{
+				Row: selectedCell.Row,
+				Col: 0,
+			})
+
+			table.Refresh()
+			setPreferences(versionTool)
+		} else {
+			log.Println("Cannot move down: Already at the bottom row")
+		}
+	})
+	btnMoveRowDown.Icon = theme.Icon(theme.IconNameArrowDropDown)
+	btnMoveRowDown.Disable()
 
 	lblOutput = widget.NewLabel("")
 
-	hBoxTable := container.NewHBox(btnAddRow, btnEditRow, btnDeleteRow, lblOutput)
+	hBoxTable := container.NewHBox(btnAddRow, btnEditRow, btnDeleteRow, btnMoveRowUp, btnMoveRowDown, lblOutput)
 
 	w.SetContent(container.NewBorder(
 		container.NewBorder(nil, nil, hello, hBoxSelect, comboSelect), hBoxTable, nil, nil,
@@ -308,17 +362,6 @@ func configureCheckSpecial(strSpecialDisabled string) {
 		checkSpecial.Refresh()
 	}
 }
-func configureCheckHeld(payloadText string) {
-	if len(btnNote.Text) > 6 || (payloadText != "" && strings.HasPrefix(payloadText, "Keypress:")) || btnNote.Text[0] != 'B' {
-		checkHeld.Disable()
-		checkHeld.Text = "(disabled) Held"
-		checkHeld.Refresh()
-	} else {
-		checkHeld.Enable()
-		checkHeld.Text = "Held"
-		checkHeld.Refresh()
-	}
-}
 
 func refreshDevices() {
 	devices := pkgMidi.GetInputPorts()
@@ -361,7 +404,6 @@ func fillMapKeys() {
 			Payload:  data[i][COLUMN_PAYLOAD],
 			Velocity: uint16(vel),
 			Special:  data[i][COLUMN_SPECIAL] == "true",
-			Held:     data[i][COLUMN_HELD] == "true",
 		}
 	}
 }
@@ -380,6 +422,8 @@ func listen() {
 		btnAddRow.Disable()
 		btnDeleteRow.Disable()
 		btnEditRow.Disable()
+		btnMoveRowUp.Disable()
+		btnMoveRowDown.Disable()
 	} else {
 		pkgMidi.StopListen()
 		btnListen.Text = strStartListen
@@ -390,8 +434,7 @@ func listen() {
 		btnRefresh.Enable()
 		comboSelect.Enable()
 		btnAddRow.Enable()
-		btnDeleteRow.Enable()
-		btnEditRow.Enable()
+		enableRowButtons()
 	}
 }
 
@@ -420,11 +463,9 @@ func headerUpdate(id widget.TableCellID, o fyne.CanvasObject) {
 	case 2:
 		header.SetText("Description")
 	case 3:
-		header.SetText("Velocity")
+		header.SetText("Vel")
 	case 4:
 		header.SetText("Special")
-	case 5:
-		header.SetText("Held")
 	}
 
 	// header.OnTapped = func() {

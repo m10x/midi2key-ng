@@ -21,7 +21,7 @@ Give your midicontroller the ability to:
   - new source soundboard_mic combines the default microphone with a new audio sink soundboard_router by utilizing pactl
   - run `paplay --list-file-formats` to list all available formats
 - control your audio
-  - input/output devices, applications, focused application (Currently only Gnome)
+  - input/output devices, applications, focused application (x11 and only wayland if Gnome)
   - increase/decrease/set volume
   - mute/unmute/toggle
 
@@ -45,16 +45,24 @@ The repository can be fetched and installed using Go.
 `go install -v github.com/m10x/midi2key-ng@latest`
 
 ### Requirements
+
+## general
 - Install [DoTool](https://sr.ht/~geb/dotool/) for input emulation
     - `git clone https://git.sr.ht/\~geb/dotool` 
     - `sudo apt install scdoc`
     - `cd dotool && ./build.sh && sudo ./build.sh install`
     - `sudo udevadm control --reload && sudo udevadm trigger`
+    - restart OS
+    - `echo write test | dotool` to check if dotool works
+
+## x11
+- `apt install xprop xdotool` for audio control of focused application
+
+## Wayland
 - Install Gnome Extension [Window Calls Extended](https://github.com/hseliger/window-calls-extended) to control audio of focused application
   
 ## Roadmap
 - sort table https://fynelabs.com/2023/10/05/user-data-sorting-with-a-fyne-table-widget/
-- reorder rows
 - self update https://fynelabs.com/2022/11/17/easy-selfupdate-deployment-for-go-application/
 - soundfile picker
 - spam actions if key keeps getting pressed (hold)
