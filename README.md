@@ -63,7 +63,6 @@ The repository can be fetched and installed using Go.
   
 ## Roadmap
 - sort table https://fynelabs.com/2023/10/05/user-data-sorting-with-a-fyne-table-widget/
-- self update https://fynelabs.com/2022/11/17/easy-selfupdate-deployment-for-go-application/
 - soundfile picker
 - spam actions if key keeps getting pressed (hold)
 - multiple profiles
