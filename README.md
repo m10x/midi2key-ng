@@ -61,6 +61,7 @@ The repository can be fetched and installed using Go.
 - multiple profiles
 - hotkeys to start/stop listening
 - add optional textbox with log output
+- error output in gui
 - add code comments
 - create default Key Mapping for Behringer X Touch Mini with an easy option to add more defaults
 - export (aka Backup) / import Key Mapping
