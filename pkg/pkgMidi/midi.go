@@ -39,14 +39,13 @@ type KeyStruct struct {
 func GetInputPorts() []string {
 	var ports []string
 
-	log.Println(midi.GetInPorts().String())
-	portArr := strings.Split(midi.GetInPorts().String(), "]")
+	getPorts := strings.TrimSpace(midi.GetInPorts().String())
+	log.Println("Ports: " + getPorts)
+	portArr := strings.Split(getPorts, "]")
 	for i := len(portArr) - 1; i > 0; i-- {
 		port := strings.Split(portArr[i], ":")[0]
 		ports = append(ports, strings.TrimSpace(port))
 	}
-
-	log.Println(ports)
 
 	return ports
 }

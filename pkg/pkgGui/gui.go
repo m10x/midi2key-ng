@@ -2,7 +2,6 @@ package pkgGui
 
 import (
 	"crypto/ed25519"
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -90,7 +89,7 @@ func selfManage(a fyne.App, w fyne.Window, sourceURL string) {
 		log.Println("Error checking for the latest version: " + err.Error())
 		return
 	}
-	fmt.Printf("Current version: %s. Found version: %v\n", a.Metadata().Version, latestVersion)
+	log.Printf("Current version: %s. Found version: %v\n", a.Metadata().Version, latestVersion)
 	config := fyneselfupdate.NewConfigWithTimeout(a, w, time.Duration(1)*time.Minute,
 		httpSource,
 		selfupdate.Schedule{FetchOnStart: true, Interval: time.Hour * time.Duration(24)}, // Checking for binary update on start and every 24 hours
