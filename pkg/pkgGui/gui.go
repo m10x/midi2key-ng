@@ -22,6 +22,7 @@ import (
 	"github.com/fynelabs/fyneselfupdate"
 	"github.com/fynelabs/selfupdate"
 	"github.com/m10x/midi2key-ng/pkg/pkgCmd"
+	"github.com/m10x/midi2key-ng/pkg/pkgControllers"
 	"github.com/m10x/midi2key-ng/pkg/pkgMidi"
 )
 
@@ -53,6 +54,7 @@ var (
 	btnMoveRowUp   *widget.Button
 	btnMoveRowDown *widget.Button
 	btnShowLog     *widget.Button
+	btnLoadConfig  *widget.Button
 	lblOutput      *widget.Label
 	checkSpecial   *widget.Check
 	entryVelocity  *widget.Entry
@@ -64,9 +66,9 @@ var (
 	menuTray       *fyne.Menu
 	desk           desktop.App
 	a              fyne.App
-
-	logPopup *widget.PopUp
-	logEntry *widget.Entry
+	popupConfig    *widget.PopUp
+	popupLog       *widget.PopUp
+	entryLog       *widget.Entry
 )
 
 func enableRowButtons() {
@@ -153,7 +155,6 @@ func Startup(versionTool string) {
 		ID:      "de.m10x.midi2key-ng",
 		Name:    "midi2key-ng",
 		Version: versionTool,
-		Build:   123,
 	})
 	w := a.NewWindow(a.Metadata().Name + " " + versionTool)
 	w.Resize(fyne.NewSize(1055, 400))
@@ -162,7 +163,28 @@ func Startup(versionTool string) {
 
 	mapKeys = make(map[uint8]pkgMidi.KeyStruct)
 
-	hello := widget.NewLabel("Hello! :)")
+	vboxConfigs := container.NewVBox()
+	for _, controller := range pkgControllers.Controllers {
+		vboxConfigs.Add(widget.NewButton(controller.Name, func() {
+			data = controller.Data
+		}))
+	}
+
+	btnCloseConfig := widget.NewButton("Close", func() {
+		popupConfig.Hide()
+	})
+
+	entryCurrentConfig := widget.NewEntry()
+
+	borderConfig := container.NewBorder(entryCurrentConfig, btnCloseConfig, nil, nil, vboxConfigs)
+
+	popupConfig = widget.NewModalPopUp(borderConfig, w.Canvas())
+	popupConfig.Resize(fyne.NewSize(800, 400))
+
+	btnLoadConfig = widget.NewButton("Load Config", func() {
+		entryCurrentConfig.SetText(pkgControllers.PrintCurrentConfigAsCode(data))
+		popupConfig.Show()
+	})
 
 	comboSelect = widget.NewSelect([]string{""}, func(value string) {
 		log.Println("Selected midi device " + value)
@@ -207,8 +229,8 @@ func Startup(versionTool string) {
 
 	table.SetColumnWidth(0, 39)
 	table.SetColumnWidth(1, 475)
-	table.SetColumnWidth(2, 375)
-	table.SetColumnWidth(3, 40)
+	table.SetColumnWidth(2, 360)
+	table.SetColumnWidth(3, 55)
 	table.SetColumnWidth(4, 60)
 
 	table.CreateHeader = headerCreate
@@ -394,16 +416,16 @@ func Startup(versionTool string) {
 
 	lblOutput = widget.NewLabel("")
 
-	logEntry = widget.NewMultiLineEntry()
-	logEntry.Wrapping = fyne.TextWrapWord
+	entryLog = widget.NewMultiLineEntry()
+	entryLog.Wrapping = fyne.TextWrapWord
 
-	logEntry.OnChanged = func(newMsg string) {
+	entryLog.OnChanged = func(newMsg string) {
 		// Update the cursor to the end of the text
-		logEntry.CursorRow = len(logEntry.Text) - 1
+		entryLog.CursorRow = len(entryLog.Text) - 1
 	}
 
 	// Create a CustomLogWriter for the MultiLineEntry
-	logWriter := NewCustomLogWriter(logEntry, MAX_LOG_LINES)
+	logWriter := NewCustomLogWriter(entryLog, MAX_LOG_LINES)
 
 	// Combine terminal output (os.Stdout) and the custom log writer using MultiWriter
 	multiWriter := io.MultiWriter(os.Stdout, logWriter)
@@ -411,25 +433,26 @@ func Startup(versionTool string) {
 	log.SetOutput(multiWriter)
 
 	btnCopyLog := widget.NewButton("Copy Log to Clipboard", func() {
-		w.Clipboard().SetContent(logEntry.Text)
+		w.Clipboard().SetContent(entryLog.Text)
 	})
 	btnCloseLog := widget.NewButton("Close Log", func() {
-		logPopup.Hide()
+		popupLog.Hide()
 	})
 	logHBox := container.NewHBox(btnCopyLog, layout.NewSpacer(), widget.NewLabel(strconv.Itoa(int(MAX_LOG_LINES))+" last log lines"), layout.NewSpacer(), btnCloseLog)
 
-	logBorder := container.NewBorder(nil, logHBox, nil, nil, logEntry)
-	logPopup = widget.NewModalPopUp(logBorder, w.Canvas())
-	logPopup.Resize(fyne.NewSize(800, 400))
+	logBorder := container.NewBorder(nil, logHBox, nil, nil, entryLog)
+	popupLog = widget.NewModalPopUp(logBorder, w.Canvas())
+	popupLog.Resize(fyne.NewSize(800, 400))
 
 	btnShowLog = widget.NewButton("Show Log", func() {
-		logPopup.Show()
+		entryLog.CursorRow = len(entryLog.Text) - 1
+		popupLog.Show()
 	})
 
 	hBoxTable := container.NewHBox(btnAddRow, btnEditRow, btnDeleteRow, btnMoveRowUp, btnMoveRowDown, lblOutput, layout.NewSpacer(), btnShowLog)
 
 	w.SetContent(container.NewBorder(
-		container.NewBorder(nil, nil, hello, hBoxSelect, comboSelect), hBoxTable, nil, nil,
+		container.NewBorder(nil, nil, btnLoadConfig, hBoxSelect, comboSelect), hBoxTable, nil, nil,
 		table,
 	))
 

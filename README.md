@@ -62,12 +62,12 @@ The repository can be fetched and installed using Go.
 - Install Gnome Extension [Window Calls Extended](https://github.com/hseliger/window-calls-extended) to control audio of focused application
   
 ## Roadmap
+- improve log speed `log.SetOutput(multiWriter)`
 - sort table https://fynelabs.com/2023/10/05/user-data-sorting-with-a-fyne-table-widget/
 - soundfile picker
 - spam actions if key keeps getting pressed (hold)
 - multiple profiles
 - hotkeys to start/stop listening
-- add optional textbox with log output
 - error output in gui
 - add code comments
 - create default Key Mapping for Behringer X Touch Mini with an easy option to add more defaults
