@@ -1,7 +1,6 @@
 package pkgGui
 
 import (
-	"container/ring"
 	"crypto/ed25519"
 	"io"
 	"log"
@@ -112,43 +111,37 @@ func selfManage(a fyne.App, w fyne.Window, sourceURL string) {
 	}
 }
 
-// CustomLogWriter is a high-performance writer to redirect logs to a Fyne MultiLineEntry
 type CustomLogWriter struct {
-	entry      *widget.Entry
-	lineBuffer *ring.Ring // Circular buffer for storing limited lines
-	mu         sync.Mutex // Synchronizes access to the buffer
+	lines    []string
+	maxLines int
+	mu       sync.RWMutex
 }
 
-func NewCustomLogWriter(entry *widget.Entry, maxLines int) *CustomLogWriter {
-	// Create a circular buffer with a maximum number of lines
+func NewCustomLogWriter(maxLines int) *CustomLogWriter {
 	return &CustomLogWriter{
-		entry:      entry,
-		lineBuffer: ring.New(maxLines),
+		lines:    make([]string, 0, maxLines),
+		maxLines: maxLines,
 	}
 }
 
-// Write implements the io.Writer interface
 func (w *CustomLogWriter) Write(p []byte) (n int, err error) {
 	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	// Add the new log line to the circular buffer
-	w.lineBuffer.Value = strings.TrimSpace(string(p))
-	w.lineBuffer = w.lineBuffer.Next()
-
-	// Collect all lines from the buffer
-	var lines []string
-	w.lineBuffer.Do(func(val interface{}) {
-		if val != nil {
-			lines = append(lines, val.(string))
-		}
-	})
-
-	// Update the MultiLineEntry text (only once per Write)
-	w.entry.SetText(strings.Join(lines, "\n"))
+	if len(w.lines) >= w.maxLines {
+		w.lines = w.lines[1:]
+	}
+	w.lines = append(w.lines, strings.TrimSpace(string(p)))
+	w.mu.Unlock()
 
 	return len(p), nil
 }
+
+func (w *CustomLogWriter) GetLogs() string {
+	w.mu.RLock()
+	text := strings.Join(w.lines, "\n")
+	w.mu.RUnlock()
+	return text
+}
+
 func Startup(versionTool string) {
 	a = app.New()
 	app.SetMetadata(fyne.AppMetadata{
@@ -424,27 +417,28 @@ func Startup(versionTool string) {
 		entryLog.CursorRow = len(entryLog.Text) - 1
 	}
 
-	// Create a CustomLogWriter for the MultiLineEntry
-	logWriter := NewCustomLogWriter(entryLog, MAX_LOG_LINES)
-
-	// Combine terminal output (os.Stdout) and the custom log writer using MultiWriter
+	logWriter := NewCustomLogWriter(MAX_LOG_LINES)
 	multiWriter := io.MultiWriter(os.Stdout, logWriter)
-	// Set the log output to the MultiWriter
 	log.SetOutput(multiWriter)
 
 	btnCopyLog := widget.NewButton("Copy Log to Clipboard", func() {
 		w.Clipboard().SetContent(entryLog.Text)
 	})
+	btnRefreshLog := widget.NewButton("Refresh Log", func() {
+		entryLog.SetText(logWriter.GetLogs())
+		entryLog.CursorRow = len(entryLog.Text) - 1
+	})
 	btnCloseLog := widget.NewButton("Close Log", func() {
 		popupLog.Hide()
 	})
-	logHBox := container.NewHBox(btnCopyLog, layout.NewSpacer(), widget.NewLabel(strconv.Itoa(int(MAX_LOG_LINES))+" last log lines"), layout.NewSpacer(), btnCloseLog)
+	logHBox := container.NewHBox(btnCopyLog, layout.NewSpacer(), widget.NewLabel(strconv.Itoa(int(MAX_LOG_LINES))+" last log lines"), layout.NewSpacer(), btnRefreshLog, btnCloseLog)
 
 	logBorder := container.NewBorder(nil, logHBox, nil, nil, entryLog)
 	popupLog = widget.NewModalPopUp(logBorder, w.Canvas())
 	popupLog.Resize(fyne.NewSize(800, 400))
 
 	btnShowLog = widget.NewButton("Show Log", func() {
+		entryLog.SetText(logWriter.GetLogs())
 		entryLog.CursorRow = len(entryLog.Text) - 1
 		popupLog.Show()
 	})
@@ -559,6 +553,7 @@ func listen() {
 		btnEditRow.Disable()
 		btnMoveRowUp.Disable()
 		btnMoveRowDown.Disable()
+		btnLoadConfig.Disable()
 	} else {
 		pkgMidi.StopListen()
 		btnListen.Text = strStartListen
@@ -569,6 +564,7 @@ func listen() {
 		btnRefresh.Enable()
 		comboSelect.Enable()
 		btnAddRow.Enable()
+		btnLoadConfig.Enable()
 		enableRowButtons()
 	}
 }
