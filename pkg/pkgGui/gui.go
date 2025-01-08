@@ -143,7 +143,7 @@ func (w *CustomLogWriter) GetLogs() string {
 }
 
 func Startup(versionTool string) {
-	a = app.New()
+	a = app.NewWithID("de.m10x.midi2key-ng")
 	app.SetMetadata(fyne.AppMetadata{
 		ID:      "de.m10x.midi2key-ng",
 		Name:    "midi2key-ng",
