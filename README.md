@@ -27,13 +27,13 @@ Give your midicontroller the ability to:
 
 ## Screenshots
 Overview of Assignments
-![image](https://user-images.githubusercontent.com/4344935/199974889-86d36ddc-32c7-48cc-b986-65a83aa575a3.png)
+![image](https://github.com/user-attachments/assets/94f1dffd-fb34-42dd-b5e8-8826e54d6e9e)
 
 New Assignment
-![image](https://user-images.githubusercontent.com/4344935/199975309-8205d9cf-65dd-4c01-b717-c5ccb2826150.png)
+![image](https://github.com/user-attachments/assets/ec212cdd-d061-4b56-af35-43a854fe386c)
 
 Edit an Assignment
-![image](https://user-images.githubusercontent.com/4344935/199975097-e79b21e4-bd12-433b-9003-53939384a237.png)
+![image](https://github.com/user-attachments/assets/d55f28ae-7f3e-44df-addb-348d177b2d98)
 
 ## How to Install
 
@@ -63,6 +63,7 @@ The repository can be fetched and installed using Go.
   
 ## Roadmap
 - implement checks if required commandline tools are available
+- export (aka Backup) / import Key Mapping
 - sort table https://fynelabs.com/2023/10/05/user-data-sorting-with-a-fyne-table-widget/
 - soundfile picker
 - spam actions if key keeps getting pressed (hold)
@@ -70,7 +71,6 @@ The repository can be fetched and installed using Go.
 - hotkeys to start/stop listening
 - error output in gui
 - add code comments
-- export (aka Backup) / import Key Mapping
 - improve design, layout etc.
 - test other midi controllers
 
