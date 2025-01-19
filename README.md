@@ -44,9 +44,9 @@ Download a precompiled binary from the [latest Release](https://github.com/m10x/
 The repository can be fetched and installed using Go.  
 `go install -v github.com/m10x/midi2key-ng@latest`
 
-### Requirements
+## Requirements
 
-## general
+### general
 - Install [DoTool](https://sr.ht/~geb/dotool/) for input emulation
     - `git clone https://git.sr.ht/\~geb/dotool` 
     - `sudo apt install scdoc`
@@ -55,14 +55,14 @@ The repository can be fetched and installed using Go.
     - restart OS
     - `echo write test | dotool` to check if dotool works
 
-## x11
+### x11
 - `apt install xprop xdotool` for audio control of focused application
 
-## Wayland
+### Wayland
 - Install Gnome Extension [Window Calls Extended](https://github.com/hseliger/window-calls-extended) to control audio of focused application
   
 ## Roadmap
-- improve log speed `log.SetOutput(multiWriter)`
+- implement checks if required commandline tools are available
 - sort table https://fynelabs.com/2023/10/05/user-data-sorting-with-a-fyne-table-widget/
 - soundfile picker
 - spam actions if key keeps getting pressed (hold)
@@ -70,7 +70,6 @@ The repository can be fetched and installed using Go.
 - hotkeys to start/stop listening
 - error output in gui
 - add code comments
-- create default Key Mapping for Behringer X Touch Mini with an easy option to add more defaults
 - export (aka Backup) / import Key Mapping
 - improve design, layout etc.
 - test other midi controllers

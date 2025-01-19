@@ -157,6 +157,7 @@ func Startup(versionTool string) {
 	mapKeys = make(map[uint8]pkgMidi.KeyStruct)
 
 	vboxConfigs := container.NewVBox()
+	vboxConfigs.Add(widget.NewLabel("Available Configs"))
 	for _, controller := range pkgControllers.Controllers {
 		vboxConfigs.Add(widget.NewButton(controller.Name, func() {
 			data = controller.Data
